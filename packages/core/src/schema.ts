@@ -55,6 +55,47 @@ export const todaySummarySchema = z.object({
   isTodayCheckedIn: z.boolean(),
 });
 
+export const missionStatusSchema = z.enum(["on_track", "cashflow_negative", "debt_stalled", "high_risk"]);
+export const analyticsDirectionSchema = z.enum(["improving", "flat", "worsening"]);
+
+export const analyticsPeriodSchema = z.object({
+  label: z.string(),
+  income: z.number(),
+  outflow: z.number(),
+  netMargin: z.number(),
+  debtPayments: z.number(),
+});
+
+export const debtSeriesPointSchema = z.object({
+  label: z.string(),
+  value: z.number(),
+});
+
+export const cashflowSeriesPointSchema = z.object({
+  label: z.string(),
+  income: z.number(),
+  outflow: z.number(),
+  netMargin: z.number(),
+});
+
+export const analyticsSummarySchema = z.object({
+  missionStatus: missionStatusSchema,
+  primaryMessage: z.string(),
+  secondaryMessage: z.string(),
+  confidenceMessage: z.string(),
+  hasDataConfidenceWarning: z.boolean(),
+  currentMonth: analyticsPeriodSchema,
+  previousMonth: analyticsPeriodSchema,
+  debtOutstanding: z.number(),
+  debtPaymentChange: z.number(),
+  netMarginChange: z.number(),
+  estimatedMonthsToDebtFree: z.number().nullable(),
+  cashflowDirection: analyticsDirectionSchema,
+  focusItems: z.array(z.string()),
+  debtSeries: z.array(debtSeriesPointSchema),
+  cashflowSeries: z.array(cashflowSeriesPointSchema),
+});
+
 export type Category = z.infer<typeof categorySchema>;
 export type CategoryType = z.infer<typeof categoryTypeSchema>;
 export type Entry = z.infer<typeof entrySchema>;
@@ -62,6 +103,12 @@ export type EntryType = z.infer<typeof entryTypeSchema>;
 export type Debt = z.infer<typeof debtSchema>;
 export type CheckIn = z.infer<typeof checkInSchema>;
 export type TodaySummary = z.infer<typeof todaySummarySchema>;
+export type MissionStatus = z.infer<typeof missionStatusSchema>;
+export type AnalyticsDirection = z.infer<typeof analyticsDirectionSchema>;
+export type AnalyticsPeriod = z.infer<typeof analyticsPeriodSchema>;
+export type DebtSeriesPoint = z.infer<typeof debtSeriesPointSchema>;
+export type CashflowSeriesPoint = z.infer<typeof cashflowSeriesPointSchema>;
+export type AnalyticsSummary = z.infer<typeof analyticsSummarySchema>;
 
 export const entryInputSchema = entrySchema.omit({
   id: true,

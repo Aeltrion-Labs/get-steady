@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { QueryClientProvider, useMutation, useQuery } from "@tanstack/react-query";
 import { save } from "@tauri-apps/plugin-dialog";
-import { calculateTodaySummary, getMissedCheckInDates } from "@get-steady/core";
-import { ArrowDownCircle, BookOpenText, CircleDollarSign, House, Settings2 } from "lucide-react";
+import { calculateAnalyticsSummary, calculateTodaySummary, getMissedCheckInDates } from "@get-steady/core";
+import { ArrowDownCircle, BookOpenText, ChartColumnIncreasing, CircleDollarSign, House, Settings2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { Badge } from "./components/ui/badge";
 import { Button } from "./components/ui/button";
+import { AnalyticsScreen } from "./features/analytics/analytics-screen";
 import { DebtsScreen } from "./features/debts/debts-screen";
 import { LedgerScreen } from "./features/ledger/ledger-screen";
 import { SettingsScreen } from "./features/settings/settings-screen";
@@ -25,12 +26,13 @@ import {
 import { queryClient } from "./lib/query-client";
 import { cn, formatCurrency, todayIsoDate } from "./lib/utils";
 
-type View = "today" | "ledger" | "debts" | "settings";
+type View = "today" | "ledger" | "debts" | "analytics" | "settings";
 
 const NAV_ITEMS = [
   { id: "today" as const, label: "Today", icon: House },
   { id: "ledger" as const, label: "Ledger", icon: BookOpenText },
   { id: "debts" as const, label: "Debts", icon: ArrowDownCircle },
+  { id: "analytics" as const, label: "Analytics", icon: ChartColumnIncreasing },
   { id: "settings" as const, label: "Settings", icon: Settings2 },
 ];
 
@@ -127,6 +129,12 @@ function AppInner() {
 
   const data = bootstrapQuery.data;
   const summary = calculateTodaySummary({
+    entries: data.entries,
+    debts: data.debts,
+    checkIns: data.checkIns,
+    today,
+  });
+  const analyticsSummary = calculateAnalyticsSummary({
     entries: data.entries,
     debts: data.debts,
     checkIns: data.checkIns,
@@ -253,6 +261,8 @@ function AppInner() {
               }}
             />
           ) : null}
+
+          {currentView === "analytics" ? <AnalyticsScreen summary={analyticsSummary} /> : null}
 
           {currentView === "settings" ? (
             <SettingsScreen

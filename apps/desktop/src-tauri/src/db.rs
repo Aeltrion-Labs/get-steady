@@ -6,10 +6,10 @@ use rusqlite::{params, params_from_iter, Connection, OptionalExtension, ToSql};
 use std::fs;
 use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Manager};
-use time::OffsetDateTime;
+use time::{Date, OffsetDateTime};
 use uuid::Uuid;
 
-const SCHEMA_VERSION: i64 = 1;
+const SCHEMA_VERSION: i64 = 2;
 
 pub struct AppPaths {
     pub backup_dir: PathBuf,
@@ -44,6 +44,7 @@ pub fn open_connection(app: &AppHandle) -> Result<(Connection, AppPaths), String
         .map_err(|error| format!("failed to set busy timeout: {error}"))?;
 
     run_migrations(&connection)?;
+    validate_database_integrity(&connection)?;
 
     Ok((
         connection,
@@ -86,45 +87,60 @@ fn run_migrations(connection: &Connection) -> Result<(), String> {
         connection
             .execute_batch(
                 "
+                DROP TABLE IF EXISTS check_ins;
+                DROP TABLE IF EXISTS entries;
+                DROP TABLE IF EXISTS debts;
+                DROP TABLE IF EXISTS categories;
+
                 CREATE TABLE IF NOT EXISTS categories (
                   id TEXT PRIMARY KEY,
                   name TEXT NOT NULL UNIQUE,
-                  type TEXT NOT NULL
+                  type TEXT NOT NULL CHECK(type IN ('income', 'expense', 'both'))
                 );
 
                 CREATE TABLE IF NOT EXISTS debts (
                   id TEXT PRIMARY KEY,
                   name TEXT NOT NULL,
                   lender TEXT,
-                  balance_current REAL NOT NULL,
-                  interest_rate REAL,
-                  minimum_payment REAL,
-                  due_day INTEGER,
+                  starting_balance_cents INTEGER NOT NULL CHECK(starting_balance_cents >= 0),
+                  interest_rate_bps INTEGER CHECK(interest_rate_bps >= 0),
+                  minimum_payment_cents INTEGER CHECK(minimum_payment_cents >= 0),
+                  due_day INTEGER CHECK(due_day BETWEEN 1 AND 31),
                   created_at TEXT NOT NULL,
                   updated_at TEXT NOT NULL,
-                  is_active INTEGER NOT NULL DEFAULT 1
+                  is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0, 1))
                 );
 
                 CREATE TABLE IF NOT EXISTS entries (
                   id TEXT PRIMARY KEY,
-                  type TEXT NOT NULL,
-                  amount REAL NOT NULL,
+                  type TEXT NOT NULL CHECK(type IN ('income', 'expense', 'debt_payment')),
+                  amount_cents INTEGER NOT NULL CHECK(amount_cents > 0),
                   category_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
                   debt_id TEXT REFERENCES debts(id) ON DELETE RESTRICT,
                   note TEXT,
-                  entry_date TEXT NOT NULL,
+                  entry_date TEXT NOT NULL CHECK(entry_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
                   created_at TEXT NOT NULL,
                   updated_at TEXT NOT NULL,
-                  source TEXT NOT NULL,
-                  is_estimated INTEGER NOT NULL DEFAULT 0
+                  source TEXT NOT NULL CHECK(source IN ('manual', 'catch_up', 'seed', 'import', 'api', 'cli', 'mcp')),
+                  is_estimated INTEGER NOT NULL DEFAULT 0 CHECK(is_estimated IN (0, 1)),
+                  CHECK(
+                    (type = 'debt_payment' AND debt_id IS NOT NULL AND category_id = 'cat-debt-payment')
+                    OR
+                    (type IN ('income', 'expense') AND debt_id IS NULL AND category_id IS NOT NULL)
+                  )
                 );
 
                 CREATE TABLE IF NOT EXISTS check_ins (
-                  date TEXT PRIMARY KEY,
-                  completed INTEGER NOT NULL DEFAULT 1,
+                  date TEXT PRIMARY KEY CHECK(date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
+                  completed INTEGER NOT NULL DEFAULT 1 CHECK(completed IN (0, 1)),
                   completed_at TEXT,
-                  is_partial INTEGER NOT NULL DEFAULT 0,
-                  note TEXT
+                  is_partial INTEGER NOT NULL DEFAULT 0 CHECK(is_partial IN (0, 1)),
+                  note TEXT,
+                  CHECK(
+                    (completed = 1 AND is_partial = 0 AND completed_at IS NOT NULL)
+                    OR
+                    (completed = 0 AND is_partial = 1 AND completed_at IS NULL)
+                  )
                 );
 
                 CREATE INDEX IF NOT EXISTS idx_entries_entry_date ON entries(entry_date);
@@ -145,6 +161,18 @@ fn run_migrations(connection: &Connection) -> Result<(), String> {
 
     seed_categories(connection)?;
     Ok(())
+}
+
+fn validate_database_integrity(connection: &Connection) -> Result<(), String> {
+    let result: String = connection
+        .query_row("PRAGMA integrity_check(1)", [], |row| row.get(0))
+        .map_err(|error| format!("failed to run integrity check: {error}"))?;
+
+    if result == "ok" {
+        Ok(())
+    } else {
+        Err(format!("database integrity check failed: {result}"))
+    }
 }
 
 fn seed_categories(connection: &Connection) -> Result<(), String> {
@@ -183,7 +211,7 @@ fn entry_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<EntryRecord> {
     Ok(EntryRecord {
         id: row.get(0)?,
         entry_type: row.get(1)?,
-        amount: row.get(2)?,
+        amount: cents_to_amount(row.get(2)?),
         category_id: row.get(3)?,
         debt_id: row.get(4)?,
         note: row.get(5)?,
@@ -200,9 +228,9 @@ fn debt_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<DebtRecord> {
         id: row.get(0)?,
         name: row.get(1)?,
         lender: row.get(2)?,
-        balance_current: row.get(3)?,
-        interest_rate: row.get(4)?,
-        minimum_payment: row.get(5)?,
+        balance_current: cents_to_amount(row.get(3)?),
+        interest_rate: bps_to_rate(row.get(4)?),
+        minimum_payment: optional_cents_to_amount(row.get(5)?),
         due_day: row.get(6)?,
         created_at: row.get(7)?,
         updated_at: row.get(8)?,
@@ -235,7 +263,7 @@ fn list_categories(connection: &Connection) -> Result<Vec<CategoryRecord>, Strin
 
 pub fn list_entries(connection: &Connection, filters: Option<EntryFilters>) -> Result<Vec<EntryRecord>, String> {
     let mut sql = String::from(
-        "SELECT id, type, amount, category_id, debt_id, note, entry_date, created_at, updated_at, source, is_estimated FROM entries",
+        "SELECT id, type, amount_cents, category_id, debt_id, note, entry_date, created_at, updated_at, source, is_estimated FROM entries",
     );
     let mut clauses: Vec<String> = Vec::new();
     let mut values: Vec<String> = Vec::new();
@@ -282,7 +310,23 @@ pub fn list_entries(connection: &Connection, filters: Option<EntryFilters>) -> R
 fn list_debts(connection: &Connection) -> Result<Vec<DebtRecord>, String> {
     let mut statement = connection
         .prepare(
-            "SELECT id, name, lender, balance_current, interest_rate, minimum_payment, due_day, created_at, updated_at, is_active FROM debts ORDER BY is_active DESC, name",
+            "
+            SELECT
+              d.id,
+              d.name,
+              d.lender,
+              MAX(d.starting_balance_cents - COALESCE(SUM(CASE WHEN e.type = 'debt_payment' THEN e.amount_cents ELSE 0 END), 0), 0) AS current_balance_cents,
+              d.interest_rate_bps,
+              d.minimum_payment_cents,
+              d.due_day,
+              d.created_at,
+              d.updated_at,
+              d.is_active
+            FROM debts d
+            LEFT JOIN entries e ON e.debt_id = d.id
+            GROUP BY d.id, d.name, d.lender, d.starting_balance_cents, d.interest_rate_bps, d.minimum_payment_cents, d.due_day, d.created_at, d.updated_at, d.is_active
+            ORDER BY d.is_active DESC, d.name
+            ",
         )
         .map_err(|error| format!("failed to prepare debt query: {error}"))?;
 
@@ -307,6 +351,304 @@ fn list_check_ins(connection: &Connection) -> Result<Vec<CheckInRecord>, String>
         .map_err(|error| format!("failed to map check-ins: {error}"))
 }
 
+fn amount_to_cents(value: f64, field_name: &str, allow_zero: bool) -> Result<i64, String> {
+    if !value.is_finite() {
+        return Err(format!("{field_name} must be a finite number."));
+    }
+
+    let scaled = value * 100.0;
+    let rounded = scaled.round();
+    if (scaled - rounded).abs() > 0.000_001 {
+        return Err(format!("{field_name} cannot have more than two decimal places."));
+    }
+
+    let cents = rounded as i64;
+    if allow_zero {
+        if cents < 0 {
+            return Err(format!("{field_name} cannot be negative."));
+        }
+    } else if cents <= 0 {
+        return Err(format!("{field_name} must be greater than zero."));
+    }
+
+    Ok(cents)
+}
+
+fn optional_amount_to_cents(value: Option<f64>, field_name: &str) -> Result<Option<i64>, String> {
+    value.map(|amount| amount_to_cents(amount, field_name, true)).transpose()
+}
+
+fn cents_to_amount(cents: i64) -> f64 {
+    cents as f64 / 100.0
+}
+
+fn optional_cents_to_amount(cents: Option<i64>) -> Option<f64> {
+    cents.map(cents_to_amount)
+}
+
+fn rate_to_bps(value: Option<f64>) -> Result<Option<i64>, String> {
+    value.map(|rate| amount_to_cents(rate, "Interest rate", true)).transpose()
+}
+
+fn bps_to_rate(value: Option<i64>) -> Option<f64> {
+    value.map(|bps| bps as f64 / 100.0)
+}
+
+fn require_iso_date(value: &str, field_name: &str) -> Result<(), String> {
+    let format = time::format_description::parse("[year]-[month]-[day]")
+        .map_err(|error| format!("failed to load date format: {error}"))?;
+    Date::parse(value, &format).map_err(|_| format!("{field_name} must use YYYY-MM-DD format."))?;
+    Ok(())
+}
+
+fn trim_optional(value: Option<String>) -> Option<String> {
+    value.and_then(|item| {
+        let trimmed = item.trim();
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed.to_string())
+        }
+    })
+}
+
+fn require_existing_record(connection: &Connection, table: &str, id: &str, label: &str) -> Result<(), String> {
+    let sql = format!("SELECT EXISTS(SELECT 1 FROM {table} WHERE id = ?1)");
+    let exists: i64 = connection
+        .query_row(&sql, params![id], |row| row.get(0))
+        .map_err(|error| format!("failed to validate {label}: {error}"))?;
+
+    if exists == 1 {
+        Ok(())
+    } else {
+        Err(format!("{label} was not found."))
+    }
+}
+
+fn sum_debt_payments_cents(connection: &Connection, debt_id: &str) -> Result<i64, String> {
+    connection
+        .query_row(
+            "SELECT COALESCE(SUM(amount_cents), 0) FROM entries WHERE debt_id = ?1 AND type = 'debt_payment'",
+            params![debt_id],
+            |row| row.get(0),
+        )
+        .map_err(|error| format!("failed to sum debt payments: {error}"))
+}
+
+fn save_entry_for_connection(connection: &mut Connection, input: EntryInput) -> Result<EntryRecord, String> {
+    let entry_type = input.entry_type.trim().to_string();
+    if !matches!(entry_type.as_str(), "income" | "expense" | "debt_payment") {
+        return Err("Entry type is invalid.".to_string());
+    }
+
+    let source = input.source.trim().to_string();
+    if !matches!(source.as_str(), "manual" | "catch_up" | "seed" | "import" | "api" | "cli" | "mcp") {
+        return Err("Entry source is invalid.".to_string());
+    }
+
+    require_iso_date(&input.entry_date, "entry date")?;
+    let amount_cents = amount_to_cents(input.amount, "Amount", false)?;
+    let note = trim_optional(input.note);
+    let is_update = input.id.is_some();
+    let entry_id = input.id.unwrap_or_else(|| Uuid::new_v4().to_string());
+
+    if is_update {
+        require_existing_record(connection, "entries", &entry_id, "Entry")?;
+    }
+
+    let (category_id, debt_id) = if entry_type == "debt_payment" {
+        let debt_id = input
+            .debt_id
+            .map(|value| value.trim().to_string())
+            .filter(|value| !value.is_empty())
+            .ok_or_else(|| "Debt payment entries must be linked to a debt.".to_string())?;
+        require_existing_record(connection, "debts", &debt_id, "Debt")?;
+        (Some("cat-debt-payment".to_string()), Some(debt_id))
+    } else {
+        if input.debt_id.is_some() {
+            return Err("Non-debt payment entries cannot be linked to a debt.".to_string());
+        }
+        let category_id = input
+            .category_id
+            .map(|value| value.trim().to_string())
+            .filter(|value| !value.is_empty())
+            .ok_or_else(|| "Entries must include a category.".to_string())?;
+        require_existing_record(connection, "categories", &category_id, "Category")?;
+        (Some(category_id), None)
+    };
+
+    let timestamp = now();
+    let transaction = connection
+        .transaction()
+        .map_err(|error| format!("failed to start entry transaction: {error}"))?;
+
+    transaction
+        .execute(
+            "
+            INSERT INTO entries (id, type, amount_cents, category_id, debt_id, note, entry_date, created_at, updated_at, source, is_estimated)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+            ON CONFLICT(id) DO UPDATE SET
+              type = excluded.type,
+              amount_cents = excluded.amount_cents,
+              category_id = excluded.category_id,
+              debt_id = excluded.debt_id,
+              note = excluded.note,
+              entry_date = excluded.entry_date,
+              updated_at = excluded.updated_at,
+              source = excluded.source,
+              is_estimated = excluded.is_estimated
+            ",
+            params![
+                entry_id,
+                entry_type,
+                amount_cents,
+                category_id,
+                debt_id,
+                note,
+                input.entry_date,
+                timestamp,
+                timestamp,
+                source,
+                if input.is_estimated { 1 } else { 0 }
+            ],
+        )
+        .map_err(|error| format!("failed to save entry: {error}"))?;
+
+    let entry = transaction
+        .query_row(
+            "SELECT id, type, amount_cents, category_id, debt_id, note, entry_date, created_at, updated_at, source, is_estimated FROM entries WHERE id = ?1",
+            params![entry_id],
+            entry_row,
+        )
+        .map_err(|error| format!("failed to read saved entry: {error}"))?;
+
+    transaction
+        .commit()
+        .map_err(|error| format!("failed to commit entry transaction: {error}"))?;
+
+    Ok(entry)
+}
+
+fn delete_entry_for_connection(connection: &mut Connection, entry_id: String) -> Result<(), String> {
+    require_existing_record(connection, "entries", &entry_id, "Entry")?;
+
+    let transaction = connection
+        .transaction()
+        .map_err(|error| format!("failed to start delete transaction: {error}"))?;
+
+    let deleted = transaction
+        .execute("DELETE FROM entries WHERE id = ?1", params![entry_id])
+        .map_err(|error| format!("failed to delete entry: {error}"))?;
+
+    if deleted != 1 {
+        return Err("Entry delete failed.".to_string());
+    }
+
+    transaction
+        .commit()
+        .map_err(|error| format!("failed to commit entry deletion: {error}"))?;
+
+    Ok(())
+}
+
+fn save_debt_for_connection(connection: &mut Connection, input: DebtInput) -> Result<DebtRecord, String> {
+    let name = input.name.trim();
+    if name.is_empty() {
+        return Err("Debt name is required.".to_string());
+    }
+
+    let balance_current_cents = amount_to_cents(input.balance_current, "Current balance", true)?;
+    let minimum_payment_cents = optional_amount_to_cents(input.minimum_payment, "Minimum payment")?;
+    let interest_rate_bps = rate_to_bps(input.interest_rate)?;
+    if let Some(due_day) = input.due_day {
+        if !(1..=31).contains(&due_day) {
+            return Err("Due day must be between 1 and 31.".to_string());
+        }
+    }
+
+    let is_update = input.id.is_some();
+    let debt_id = input.id.unwrap_or_else(|| Uuid::new_v4().to_string());
+    if is_update {
+        require_existing_record(connection, "debts", &debt_id, "Debt")?;
+    }
+
+    let total_paid_cents = sum_debt_payments_cents(connection, &debt_id)?;
+    let starting_balance_cents = balance_current_cents
+        .checked_add(total_paid_cents)
+        .ok_or_else(|| "Debt balance is too large.".to_string())?;
+    let timestamp = now();
+
+    connection
+        .execute(
+            "
+            INSERT INTO debts (id, name, lender, starting_balance_cents, interest_rate_bps, minimum_payment_cents, due_day, created_at, updated_at, is_active)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
+            ON CONFLICT(id) DO UPDATE SET
+              name = excluded.name,
+              lender = excluded.lender,
+              starting_balance_cents = excluded.starting_balance_cents,
+              interest_rate_bps = excluded.interest_rate_bps,
+              minimum_payment_cents = excluded.minimum_payment_cents,
+              due_day = excluded.due_day,
+              updated_at = excluded.updated_at,
+              is_active = excluded.is_active
+            ",
+            params![
+                debt_id,
+                name,
+                trim_optional(input.lender),
+                starting_balance_cents,
+                interest_rate_bps,
+                minimum_payment_cents,
+                input.due_day,
+                timestamp,
+                timestamp,
+                if input.is_active { 1 } else { 0 }
+            ],
+        )
+        .map_err(|error| format!("failed to save debt: {error}"))?;
+
+    list_debts(connection)?
+        .into_iter()
+        .find(|debt| debt.id == debt_id)
+        .ok_or_else(|| "failed to read saved debt".to_string())
+}
+
+fn mark_check_in_for_connection(connection: &mut Connection, input: CheckInInput) -> Result<CheckInRecord, String> {
+    require_iso_date(&input.date, "check-in date")?;
+    let completed = if input.is_partial { 0 } else { 1 };
+    let completed_at = if input.is_partial { None } else { Some(now()) };
+
+    connection
+        .execute(
+            "
+            INSERT INTO check_ins (date, completed, completed_at, is_partial, note)
+            VALUES (?1, ?2, ?3, ?4, ?5)
+            ON CONFLICT(date) DO UPDATE SET
+              completed = excluded.completed,
+              completed_at = excluded.completed_at,
+              is_partial = excluded.is_partial,
+              note = excluded.note
+            ",
+            params![
+                input.date,
+                completed,
+                completed_at,
+                if input.is_partial { 1 } else { 0 },
+                trim_optional(input.note)
+            ],
+        )
+        .map_err(|error| format!("failed to save check-in: {error}"))?;
+
+    connection
+        .query_row(
+            "SELECT date, completed, completed_at, is_partial, note FROM check_ins WHERE date = ?1",
+            params![input.date],
+            check_in_row,
+        )
+        .map_err(|error| format!("failed to read saved check-in: {error}"))
+}
+
 pub fn bootstrap(app: &AppHandle) -> Result<BootstrapPayload, String> {
     let (connection, paths) = open_connection(app)?;
 
@@ -322,180 +664,18 @@ pub fn bootstrap(app: &AppHandle) -> Result<BootstrapPayload, String> {
 }
 
 pub fn save_entry(app: &AppHandle, input: EntryInput) -> Result<EntryRecord, String> {
-    let (connection, _) = open_connection(app)?;
-    let entry_id = input.id.unwrap_or_else(|| Uuid::new_v4().to_string());
-    let existing: Option<(String, Option<String>, f64)> = connection
-        .query_row(
-            "SELECT type, debt_id, amount FROM entries WHERE id = ?1",
-            params![entry_id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
-        )
-        .optional()
-        .map_err(|error| format!("failed to load existing entry: {error}"))?;
-
-    let timestamp = now();
-    let transaction = connection
-        .unchecked_transaction()
-        .map_err(|error| format!("failed to start entry transaction: {error}"))?;
-
-    if let Some((entry_type, debt_id, amount)) = existing {
-        if entry_type == "debt_payment" {
-            if let Some(debt_id) = debt_id {
-                adjust_debt_balance(&transaction, &debt_id, amount)?;
-            }
-        }
-    }
-
-    if input.entry_type == "debt_payment" {
-        let debt_id = input
-            .debt_id
-            .as_ref()
-            .ok_or_else(|| "Debt payment entries must be linked to a debt.".to_string())?;
-        adjust_debt_balance(&transaction, debt_id, -input.amount)?;
-    }
-
-    transaction
-        .execute(
-            "
-            INSERT INTO entries (id, type, amount, category_id, debt_id, note, entry_date, created_at, updated_at, source, is_estimated)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
-            ON CONFLICT(id) DO UPDATE SET
-              type = excluded.type,
-              amount = excluded.amount,
-              category_id = excluded.category_id,
-              debt_id = excluded.debt_id,
-              note = excluded.note,
-              entry_date = excluded.entry_date,
-              updated_at = excluded.updated_at,
-              source = excluded.source,
-              is_estimated = excluded.is_estimated
-            ",
-            params![
-                entry_id,
-                input.entry_type,
-                input.amount,
-                input.category_id,
-                input.debt_id,
-                input.note,
-                input.entry_date,
-                timestamp,
-                timestamp,
-                input.source,
-                if input.is_estimated { 1 } else { 0 }
-            ],
-        )
-        .map_err(|error| format!("failed to save entry: {error}"))?;
-
-    let entry = transaction
-        .query_row(
-            "SELECT id, type, amount, category_id, debt_id, note, entry_date, created_at, updated_at, source, is_estimated FROM entries WHERE id = ?1",
-            params![entry_id],
-            entry_row,
-        )
-        .map_err(|error| format!("failed to read saved entry: {error}"))?;
-
-    transaction
-        .commit()
-        .map_err(|error| format!("failed to commit entry transaction: {error}"))?;
-
-    Ok(entry)
+    let (mut connection, _) = open_connection(app)?;
+    save_entry_for_connection(&mut connection, input)
 }
 
 pub fn delete_entry(app: &AppHandle, entry_id: String) -> Result<(), String> {
-    let (connection, _) = open_connection(app)?;
-    let existing: Option<(String, Option<String>, f64)> = connection
-        .query_row(
-            "SELECT type, debt_id, amount FROM entries WHERE id = ?1",
-            params![entry_id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
-        )
-        .optional()
-        .map_err(|error| format!("failed to load entry for deletion: {error}"))?;
-
-    let transaction = connection
-        .unchecked_transaction()
-        .map_err(|error| format!("failed to start delete transaction: {error}"))?;
-
-    if let Some((entry_type, debt_id, amount)) = existing {
-        if entry_type == "debt_payment" {
-            if let Some(debt_id) = debt_id {
-                adjust_debt_balance(&transaction, &debt_id, amount)?;
-            }
-        }
-    }
-
-    transaction
-        .execute("DELETE FROM entries WHERE id = ?1", params![entry_id])
-        .map_err(|error| format!("failed to delete entry: {error}"))?;
-
-    transaction
-        .commit()
-        .map_err(|error| format!("failed to commit entry deletion: {error}"))?;
-
-    Ok(())
-}
-
-fn adjust_debt_balance(transaction: &rusqlite::Transaction<'_>, debt_id: &str, delta: f64) -> Result<(), String> {
-    let current_balance: f64 = transaction
-        .query_row(
-            "SELECT balance_current FROM debts WHERE id = ?1",
-            params![debt_id],
-            |row| row.get(0),
-        )
-        .map_err(|error| format!("failed to load debt balance: {error}"))?;
-
-    let next_balance = (current_balance + delta).max(0.0);
-    transaction
-        .execute(
-            "UPDATE debts SET balance_current = ?1, updated_at = ?2 WHERE id = ?3",
-            params![next_balance, now(), debt_id],
-        )
-        .map_err(|error| format!("failed to update debt balance: {error}"))?;
-    Ok(())
+    let (mut connection, _) = open_connection(app)?;
+    delete_entry_for_connection(&mut connection, entry_id)
 }
 
 pub fn save_debt(app: &AppHandle, input: DebtInput) -> Result<DebtRecord, String> {
-    let (connection, _) = open_connection(app)?;
-    let debt_id = input.id.unwrap_or_else(|| Uuid::new_v4().to_string());
-    let timestamp = now();
-
-    connection
-        .execute(
-            "
-            INSERT INTO debts (id, name, lender, balance_current, interest_rate, minimum_payment, due_day, created_at, updated_at, is_active)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
-            ON CONFLICT(id) DO UPDATE SET
-              name = excluded.name,
-              lender = excluded.lender,
-              balance_current = excluded.balance_current,
-              interest_rate = excluded.interest_rate,
-              minimum_payment = excluded.minimum_payment,
-              due_day = excluded.due_day,
-              updated_at = excluded.updated_at,
-              is_active = excluded.is_active
-            ",
-            params![
-                debt_id,
-                input.name,
-                input.lender,
-                input.balance_current,
-                input.interest_rate,
-                input.minimum_payment,
-                input.due_day,
-                timestamp,
-                timestamp,
-                if input.is_active { 1 } else { 0 }
-            ],
-        )
-        .map_err(|error| format!("failed to save debt: {error}"))?;
-
-    connection
-        .query_row(
-            "SELECT id, name, lender, balance_current, interest_rate, minimum_payment, due_day, created_at, updated_at, is_active FROM debts WHERE id = ?1",
-            params![debt_id],
-            debt_row,
-        )
-        .map_err(|error| format!("failed to read saved debt: {error}"))
+    let (mut connection, _) = open_connection(app)?;
+    save_debt_for_connection(&mut connection, input)
 }
 
 pub fn delete_debt(app: &AppHandle, debt_id: String) -> Result<(), String> {
@@ -537,38 +717,8 @@ pub fn record_debt_payment(app: &AppHandle, input: DebtPaymentInput) -> Result<E
 }
 
 pub fn mark_check_in(app: &AppHandle, input: CheckInInput) -> Result<CheckInRecord, String> {
-    let (connection, _) = open_connection(app)?;
-    let completed = if input.is_partial { 0 } else { 1 };
-    let completed_at = if input.is_partial { None } else { Some(now()) };
-
-    connection
-        .execute(
-            "
-            INSERT INTO check_ins (date, completed, completed_at, is_partial, note)
-            VALUES (?1, ?2, ?3, ?4, ?5)
-            ON CONFLICT(date) DO UPDATE SET
-              completed = excluded.completed,
-              completed_at = excluded.completed_at,
-              is_partial = excluded.is_partial,
-              note = excluded.note
-            ",
-            params![
-                input.date,
-                completed,
-                completed_at,
-                if input.is_partial { 1 } else { 0 },
-                input.note
-            ],
-        )
-        .map_err(|error| format!("failed to save check-in: {error}"))?;
-
-    connection
-        .query_row(
-            "SELECT date, completed, completed_at, is_partial, note FROM check_ins WHERE date = ?1",
-            params![input.date],
-            check_in_row,
-        )
-        .map_err(|error| format!("failed to read saved check-in: {error}"))
+    let (mut connection, _) = open_connection(app)?;
+    mark_check_in_for_connection(&mut connection, input)
 }
 
 pub fn export_entries_csv(app: &AppHandle, destination: &str) -> Result<String, String> {
@@ -664,10 +814,56 @@ fn csv_optional(value: Option<&str>) -> String {
 mod tests {
     use super::*;
 
-    #[test]
-    fn run_migrations_creates_tables() {
+    fn setup_connection() -> Connection {
         let connection = Connection::open_in_memory().expect("in-memory database");
         run_migrations(&connection).expect("migration success");
+        connection
+    }
+
+    fn debt_input(balance_current: f64) -> DebtInput {
+        DebtInput {
+            id: None,
+            name: "Visa".to_string(),
+            lender: Some("Bank".to_string()),
+            balance_current,
+            interest_rate: Some(21.5),
+            minimum_payment: Some(55.0),
+            due_day: Some(12),
+            is_active: true,
+        }
+    }
+
+    fn expense_entry_input() -> EntryInput {
+        EntryInput {
+            id: None,
+            entry_type: "expense".to_string(),
+            amount: 24.50,
+            category_id: Some("cat-groceries".to_string()),
+            debt_id: None,
+            note: Some("groceries".to_string()),
+            entry_date: "2026-03-27".to_string(),
+            source: "manual".to_string(),
+            is_estimated: false,
+        }
+    }
+
+    fn debt_payment_entry_input(debt_id: &str, amount: f64) -> EntryInput {
+        EntryInput {
+            id: None,
+            entry_type: "debt_payment".to_string(),
+            amount,
+            category_id: Some("cat-debt-payment".to_string()),
+            debt_id: Some(debt_id.to_string()),
+            note: Some("payment".to_string()),
+            entry_date: "2026-03-27".to_string(),
+            source: "manual".to_string(),
+            is_estimated: false,
+        }
+    }
+
+    #[test]
+    fn run_migrations_creates_tables() {
+        let connection = setup_connection();
 
         let table_count: i64 = connection
             .query_row(
@@ -678,5 +874,124 @@ mod tests {
             .expect("table count");
 
         assert_eq!(table_count, 5);
+    }
+
+    #[test]
+    fn save_entry_rejects_invalid_date_and_illegal_debt_links() {
+        let mut connection = setup_connection();
+        let debt = save_debt_for_connection(&mut connection, debt_input(1000.0)).expect("debt saved");
+
+        let invalid_date_error = save_entry_for_connection(
+            &mut connection,
+            EntryInput {
+                entry_date: "03/27/2026".to_string(),
+                ..expense_entry_input()
+            },
+        )
+        .expect_err("invalid date should fail");
+        assert!(invalid_date_error.contains("entry date"));
+
+        let invalid_link_error = save_entry_for_connection(
+            &mut connection,
+            EntryInput {
+                debt_id: Some(debt.id),
+                ..expense_entry_input()
+            },
+        )
+        .expect_err("expense entries should not allow debt links");
+        assert!(invalid_link_error.contains("Non-debt payment entries"));
+    }
+
+    #[test]
+    fn debt_balance_is_computed_from_payments_on_create_edit_and_delete() {
+        let mut connection = setup_connection();
+        let debt = save_debt_for_connection(&mut connection, debt_input(1000.0)).expect("debt saved");
+
+        let payment = save_entry_for_connection(&mut connection, debt_payment_entry_input(&debt.id, 125.0)).expect("payment saved");
+        let after_create = list_debts(&connection).expect("debts after create");
+        assert_eq!(after_create[0].balance_current, 875.0);
+
+        save_entry_for_connection(
+            &mut connection,
+            EntryInput {
+                id: Some(payment.id.clone()),
+                amount: 150.0,
+                ..debt_payment_entry_input(&debt.id, 125.0)
+            },
+        )
+        .expect("payment edit saved");
+        let after_edit = list_debts(&connection).expect("debts after edit");
+        assert_eq!(after_edit[0].balance_current, 850.0);
+
+        delete_entry_for_connection(&mut connection, payment.id).expect("payment deleted");
+        let after_delete = list_debts(&connection).expect("debts after delete");
+        assert_eq!(after_delete[0].balance_current, 1000.0);
+    }
+
+    #[test]
+    fn updating_debt_current_balance_rebases_starting_balance_without_drift() {
+        let mut connection = setup_connection();
+        let debt = save_debt_for_connection(&mut connection, debt_input(1000.0)).expect("debt saved");
+
+        save_entry_for_connection(&mut connection, debt_payment_entry_input(&debt.id, 200.0)).expect("payment saved");
+        let rebased = save_debt_for_connection(
+            &mut connection,
+            DebtInput {
+                id: Some(debt.id),
+                balance_current: 900.0,
+                ..debt_input(1000.0)
+            },
+        )
+        .expect("debt rebased");
+
+        assert_eq!(rebased.balance_current, 900.0);
+        let listed = list_debts(&connection).expect("debts listed");
+        assert_eq!(listed[0].balance_current, 900.0);
+    }
+
+    #[test]
+    fn schema_rejects_invalid_raw_rows() {
+        let connection = setup_connection();
+
+        let bad_type_error = connection
+            .execute(
+                "INSERT INTO entries (id, type, amount_cents, category_id, debt_id, note, entry_date, created_at, updated_at, source, is_estimated)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+                params![
+                    "entry-1",
+                    "weird",
+                    1200_i64,
+                    "cat-groceries",
+                    Option::<String>::None,
+                    Option::<String>::None,
+                    "2026-03-27",
+                    now(),
+                    now(),
+                    "manual",
+                    0_i64
+                ],
+            )
+            .expect_err("invalid type should fail");
+        assert!(bad_type_error.to_string().contains("CHECK"));
+
+        let negative_money_error = connection
+            .execute(
+                "INSERT INTO debts (id, name, lender, starting_balance_cents, interest_rate_bps, minimum_payment_cents, due_day, created_at, updated_at, is_active)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+                params![
+                    "debt-1",
+                    "Visa",
+                    Option::<String>::None,
+                    -500_i64,
+                    Option::<i64>::None,
+                    Option::<i64>::None,
+                    Option::<i64>::None,
+                    now(),
+                    now(),
+                    1_i64
+                ],
+            )
+            .expect_err("negative balance should fail");
+        assert!(negative_money_error.to_string().contains("CHECK"));
     }
 }
