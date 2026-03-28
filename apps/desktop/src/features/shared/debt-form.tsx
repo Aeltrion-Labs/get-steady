@@ -71,12 +71,13 @@ export function DebtForm({
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <Label htmlFor="debt-name">Name</Label>
-          <Input id="debt-name" value={values.name} onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))} />
+          <Input id="debt-name" placeholder="Credit card, car loan, line of credit" value={values.name} onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))} />
         </div>
         <div>
           <Label htmlFor="debt-lender">Lender</Label>
           <Input
             id="debt-lender"
+            placeholder="Optional lender"
             value={values.lender}
             onChange={(event) => setValues((current) => ({ ...current, lender: event.target.value }))}
           />
@@ -89,6 +90,9 @@ export function DebtForm({
           <Input
             id="debt-balance"
             inputMode="decimal"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
             value={values.balanceCurrent}
             onChange={(event) => setValues((current) => ({ ...current, balanceCurrent: event.target.value }))}
           />
@@ -98,6 +102,9 @@ export function DebtForm({
           <Input
             id="debt-interest"
             inputMode="decimal"
+            min="0"
+            step="0.01"
+            placeholder="Optional"
             value={values.interestRate}
             onChange={(event) => setValues((current) => ({ ...current, interestRate: event.target.value }))}
           />
@@ -107,6 +114,9 @@ export function DebtForm({
           <Input
             id="debt-minimum"
             inputMode="decimal"
+            min="0"
+            step="0.01"
+            placeholder="Optional"
             value={values.minimumPayment}
             onChange={(event) => setValues((current) => ({ ...current, minimumPayment: event.target.value }))}
           />
@@ -119,11 +129,12 @@ export function DebtForm({
           <Input
             id="debt-due-day"
             inputMode="numeric"
+            placeholder="1-31"
             value={values.dueDay}
             onChange={(event) => setValues((current) => ({ ...current, dueDay: event.target.value }))}
           />
         </div>
-        <label className="flex items-center gap-3 rounded-2xl border border-border bg-white/70 px-4 py-3 text-sm text-muted-foreground">
+        <label className="flex items-center gap-3 rounded-[22px] border border-border bg-muted/45 px-4 py-3 text-sm text-muted-foreground">
           <input
             checked={values.isActive}
             type="checkbox"
@@ -135,7 +146,7 @@ export function DebtForm({
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 pt-1">
         <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? "Saving..." : initialDebt ? "Update debt" : "Create debt"}
         </Button>

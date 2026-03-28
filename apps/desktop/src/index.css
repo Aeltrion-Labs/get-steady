@@ -5,8 +5,8 @@
 @tailwind utilities;
 
 :root {
-  color: #1b1f18;
-  background: #f5f1e8;
+  color: #202833;
+  background: #f7f9fb;
   font-family: "IBM Plex Sans", system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -21,8 +21,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(216, 231, 194, 0.65), transparent 34%),
-    linear-gradient(180deg, #f8f4eb 0%, #f0e7d8 100%);
+    radial-gradient(circle at top left, rgba(226, 241, 243, 0.9), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(227, 235, 242, 0.85), transparent 28%),
+    linear-gradient(180deg, #fbfdfe 0%, #f2f6f9 100%);
 }
 
 #root {

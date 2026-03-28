@@ -213,7 +213,7 @@ export function EntryForm({
         />
       </div>
 
-      <label className="flex items-center gap-3 rounded-2xl border border-border bg-white/70 px-4 py-3 text-sm text-muted-foreground">
+      <label className="flex items-center gap-3 rounded-[22px] border border-border bg-muted/45 px-4 py-3 text-sm text-muted-foreground">
         <input
           checked={values.isEstimated}
           type="checkbox"

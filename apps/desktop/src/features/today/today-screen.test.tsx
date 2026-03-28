@@ -19,7 +19,10 @@ describe("TodayScreen", () => {
         categories={[]}
         debts={[]}
         missedDates={["2026-03-24", "2026-03-25"]}
+        activeEntryDate="2026-03-27"
+        showCatchUp
         onQuickAdd={async () => {}}
+        onSelectEntryDate={() => {}}
         onMarkTodayComplete={async () => {}}
         onMarkDatePartial={async () => {}}
       />,

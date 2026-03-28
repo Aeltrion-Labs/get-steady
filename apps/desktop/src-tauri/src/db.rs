@@ -1,6 +1,7 @@
 use crate::models::{
     BootstrapPayload, CategoryRecord, CheckInInput, CheckInRecord, DebtInput, DebtPaymentInput, DebtRecord,
-    EntryFilters, EntryInput, EntryRecord,
+    EntryFilters, EntryInput, EntryRecord, OnboardingInput, OnboardingStateRecord, UserSettingsInput,
+    UserSettingsRecord,
 };
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension, ToSql};
 use std::fs;
@@ -9,7 +10,7 @@ use tauri::{AppHandle, Manager};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-const SCHEMA_VERSION: i64 = 1;
+const SCHEMA_VERSION: i64 = 2;
 
 pub struct AppPaths {
     pub backup_dir: PathBuf,
@@ -127,6 +128,26 @@ fn run_migrations(connection: &Connection) -> Result<(), String> {
                   note TEXT
                 );
 
+                CREATE TABLE IF NOT EXISTS user_settings (
+                  id INTEGER PRIMARY KEY CHECK (id = 1),
+                  has_completed_onboarding INTEGER NOT NULL DEFAULT 0,
+                  onboarding_completed_at TEXT,
+                  daily_check_in_time TEXT,
+                  reminders_enabled INTEGER NOT NULL DEFAULT 1,
+                  daily_review_mode TEXT NOT NULL DEFAULT 'simple',
+                  default_view TEXT NOT NULL DEFAULT 'today',
+                  reminder_time TEXT NOT NULL DEFAULT '19:00',
+                  reminder_days TEXT NOT NULL DEFAULT '0,1,2,3,4,5,6',
+                  catch_up_reminder_enabled INTEGER NOT NULL DEFAULT 1,
+                  debt_due_reminder_enabled INTEGER NOT NULL DEFAULT 1,
+                  quiet_hours_start TEXT NOT NULL DEFAULT '21:30',
+                  quiet_hours_end TEXT NOT NULL DEFAULT '08:00',
+                  weekend_reminders_enabled INTEGER NOT NULL DEFAULT 1,
+                  catch_up_prompt_mode TEXT NOT NULL DEFAULT 'when_missed',
+                  show_advanced_options INTEGER NOT NULL DEFAULT 0,
+                  updated_at TEXT NOT NULL
+                );
+
                 CREATE INDEX IF NOT EXISTS idx_entries_entry_date ON entries(entry_date);
                 CREATE INDEX IF NOT EXISTS idx_entries_type ON entries(type);
                 CREATE INDEX IF NOT EXISTS idx_entries_category ON entries(category_id);
@@ -144,6 +165,7 @@ fn run_migrations(connection: &Connection) -> Result<(), String> {
     }
 
     seed_categories(connection)?;
+    seed_user_settings(connection)?;
     Ok(())
 }
 
@@ -167,6 +189,38 @@ fn seed_categories(connection: &Connection) -> Result<(), String> {
             )
             .map_err(|error| format!("failed to seed categories: {error}"))?;
     }
+
+    Ok(())
+}
+
+fn seed_user_settings(connection: &Connection) -> Result<(), String> {
+    connection
+        .execute(
+            "
+            INSERT OR IGNORE INTO user_settings (
+              id,
+              has_completed_onboarding,
+              onboarding_completed_at,
+              daily_check_in_time,
+              reminders_enabled,
+              daily_review_mode,
+              default_view,
+              reminder_time,
+              reminder_days,
+              catch_up_reminder_enabled,
+              debt_due_reminder_enabled,
+              quiet_hours_start,
+              quiet_hours_end,
+              weekend_reminders_enabled,
+              catch_up_prompt_mode,
+              show_advanced_options,
+              updated_at
+            )
+            VALUES (1, 0, NULL, '19:00', 1, 'simple', 'today', '19:00', '0,1,2,3,4,5,6', 1, 1, '21:30', '08:00', 1, 'when_missed', 0, ?1)
+            ",
+            params![now()],
+        )
+        .map_err(|error| format!("failed to seed user settings: {error}"))?;
 
     Ok(())
 }
@@ -217,6 +271,33 @@ fn check_in_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<CheckInRecord> {
         completed_at: row.get(2)?,
         is_partial: row.get::<_, i64>(3)? == 1,
         note: row.get(4)?,
+    })
+}
+
+fn onboarding_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<OnboardingStateRecord> {
+    Ok(OnboardingStateRecord {
+        has_completed_onboarding: row.get::<_, i64>(0)? == 1,
+        onboarding_completed_at: row.get(1)?,
+        daily_check_in_time: row.get(2)?,
+        reminders_enabled: row.get::<_, i64>(3)? == 1,
+        daily_review_mode: row.get(4)?,
+    })
+}
+
+fn settings_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<UserSettingsRecord> {
+    let reminder_days: String = row.get(3)?;
+    Ok(UserSettingsRecord {
+        default_view: row.get(0)?,
+        reminders_enabled: row.get::<_, i64>(1)? == 1,
+        reminder_time: row.get(2)?,
+        reminder_days: parse_reminder_days(&reminder_days),
+        catch_up_reminder_enabled: row.get::<_, i64>(4)? == 1,
+        debt_due_reminder_enabled: row.get::<_, i64>(5)? == 1,
+        quiet_hours_start: row.get(6)?,
+        quiet_hours_end: row.get(7)?,
+        weekend_reminders_enabled: row.get::<_, i64>(8)? == 1,
+        catch_up_prompt_mode: row.get(9)?,
+        show_advanced_options: row.get::<_, i64>(10)? == 1,
     })
 }
 
@@ -307,6 +388,26 @@ fn list_check_ins(connection: &Connection) -> Result<Vec<CheckInRecord>, String>
         .map_err(|error| format!("failed to map check-ins: {error}"))
 }
 
+fn get_onboarding(connection: &Connection) -> Result<OnboardingStateRecord, String> {
+    connection
+        .query_row(
+            "SELECT has_completed_onboarding, onboarding_completed_at, daily_check_in_time, reminders_enabled, daily_review_mode FROM user_settings WHERE id = 1",
+            [],
+            onboarding_row,
+        )
+        .map_err(|error| format!("failed to load onboarding state: {error}"))
+}
+
+fn get_settings(connection: &Connection) -> Result<UserSettingsRecord, String> {
+    connection
+        .query_row(
+            "SELECT default_view, reminders_enabled, reminder_time, reminder_days, catch_up_reminder_enabled, debt_due_reminder_enabled, quiet_hours_start, quiet_hours_end, weekend_reminders_enabled, catch_up_prompt_mode, show_advanced_options FROM user_settings WHERE id = 1",
+            [],
+            settings_row,
+        )
+        .map_err(|error| format!("failed to load user settings: {error}"))
+}
+
 pub fn bootstrap(app: &AppHandle) -> Result<BootstrapPayload, String> {
     let (connection, paths) = open_connection(app)?;
 
@@ -318,7 +419,78 @@ pub fn bootstrap(app: &AppHandle) -> Result<BootstrapPayload, String> {
         entries: list_entries(&connection, None)?,
         debts: list_debts(&connection)?,
         check_ins: list_check_ins(&connection)?,
+        onboarding: get_onboarding(&connection)?,
+        settings: get_settings(&connection)?,
     })
+}
+
+pub fn save_onboarding(app: &AppHandle, input: OnboardingInput) -> Result<OnboardingStateRecord, String> {
+    let (connection, _) = open_connection(app)?;
+    connection
+        .execute(
+            "
+            UPDATE user_settings
+            SET has_completed_onboarding = 1,
+                onboarding_completed_at = ?1,
+                daily_check_in_time = ?2,
+                reminders_enabled = ?3,
+                daily_review_mode = ?4,
+                reminder_time = COALESCE(?2, reminder_time),
+                updated_at = ?1
+            WHERE id = 1
+            ",
+            params![
+                now(),
+                input.daily_check_in_time,
+                if input.reminders_enabled { 1 } else { 0 },
+                input.daily_review_mode.unwrap_or_else(|| "simple".to_string()),
+            ],
+        )
+        .map_err(|error| format!("failed to save onboarding: {error}"))?;
+
+    let _ = input.selected_category_ids;
+
+    get_onboarding(&connection)
+}
+
+pub fn save_settings(app: &AppHandle, input: UserSettingsInput) -> Result<UserSettingsRecord, String> {
+    let (connection, _) = open_connection(app)?;
+    connection
+        .execute(
+            "
+            UPDATE user_settings
+            SET default_view = ?1,
+                reminders_enabled = ?2,
+                reminder_time = ?3,
+                reminder_days = ?4,
+                catch_up_reminder_enabled = ?5,
+                debt_due_reminder_enabled = ?6,
+                quiet_hours_start = ?7,
+                quiet_hours_end = ?8,
+                weekend_reminders_enabled = ?9,
+                catch_up_prompt_mode = ?10,
+                show_advanced_options = ?11,
+                updated_at = ?12
+            WHERE id = 1
+            ",
+            params![
+                input.default_view,
+                if input.reminders_enabled { 1 } else { 0 },
+                input.reminder_time,
+                serialize_reminder_days(&input.reminder_days),
+                if input.catch_up_reminder_enabled { 1 } else { 0 },
+                if input.debt_due_reminder_enabled { 1 } else { 0 },
+                input.quiet_hours_start,
+                input.quiet_hours_end,
+                if input.weekend_reminders_enabled { 1 } else { 0 },
+                input.catch_up_prompt_mode,
+                if input.show_advanced_options { 1 } else { 0 },
+                now(),
+            ],
+        )
+        .map_err(|error| format!("failed to save user settings: {error}"))?;
+
+    get_settings(&connection)
 }
 
 pub fn save_entry(app: &AppHandle, input: EntryInput) -> Result<EntryRecord, String> {
@@ -660,6 +832,21 @@ fn csv_optional(value: Option<&str>) -> String {
     value.map(csv_value).unwrap_or_default()
 }
 
+fn parse_reminder_days(value: &str) -> Vec<i64> {
+    value
+        .split(',')
+        .filter_map(|item| item.trim().parse::<i64>().ok())
+        .collect()
+}
+
+fn serialize_reminder_days(value: &[i64]) -> String {
+    value
+        .iter()
+        .map(|item| item.to_string())
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -671,12 +858,12 @@ mod tests {
 
         let table_count: i64 = connection
             .query_row(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('schema_migrations', 'categories', 'entries', 'debts', 'check_ins')",
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('schema_migrations', 'categories', 'entries', 'debts', 'check_ins', 'user_settings')",
                 [],
                 |row| row.get(0),
             )
             .expect("table count");
 
-        assert_eq!(table_count, 5);
+        assert_eq!(table_count, 6);
     }
 }

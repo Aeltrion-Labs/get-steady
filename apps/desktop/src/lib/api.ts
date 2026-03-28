@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Category, CheckIn, Debt, Entry } from "@get-steady/core";
+import type { Category, CheckIn, Debt, Entry, OnboardingState, UserSettings } from "@get-steady/core";
 
 export type BootstrapPayload = {
   dataPath: string;
@@ -9,6 +9,8 @@ export type BootstrapPayload = {
   entries: Entry[];
   debts: Debt[];
   checkIns: CheckIn[];
+  onboarding: OnboardingState;
+  settings: UserSettings;
 };
 
 export type EntryInput = {
@@ -47,6 +49,15 @@ export type CheckInInput = {
   note: string | null;
 };
 
+export type OnboardingInput = {
+  dailyCheckInTime: string | null;
+  remindersEnabled: boolean;
+  dailyReviewMode?: "simple" | "quick";
+  selectedCategoryIds: string[];
+};
+
+export type UserSettingsInput = UserSettings;
+
 export async function bootstrapApp() {
   return invoke<BootstrapPayload>("bootstrap_app");
 }
@@ -73,6 +84,14 @@ export async function recordDebtPayment(input: DebtPaymentInput) {
 
 export async function markCheckIn(input: CheckInInput) {
   return invoke<CheckIn>("mark_check_in_command", { input });
+}
+
+export async function saveOnboarding(input: OnboardingInput) {
+  return invoke<OnboardingState>("save_onboarding_command", { input });
+}
+
+export async function saveSettings(input: UserSettingsInput) {
+  return invoke<UserSettings>("save_settings_command", { input });
 }
 
 export async function exportEntriesCsv(destination: string) {
