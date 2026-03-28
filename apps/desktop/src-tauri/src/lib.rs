@@ -3,9 +3,9 @@ mod models;
 
 use db::{
     bootstrap, create_backup, delete_debt, delete_entry, export_debts_csv, export_entries_csv, list_entries,
-    mark_check_in, open_connection, record_debt_payment, save_debt, save_entry,
+    mark_check_in, open_connection, record_debt_payment, save_debt, save_entry, save_onboarding, save_settings,
 };
-use models::{BootstrapPayload, CheckInInput, DebtInput, DebtPaymentInput, EntryFilters, EntryInput};
+use models::{BootstrapPayload, CheckInInput, DebtInput, DebtPaymentInput, EntryFilters, EntryInput, OnboardingInput, UserSettingsInput};
 
 #[tauri::command]
 fn bootstrap_app(app: tauri::AppHandle) -> Result<BootstrapPayload, String> {
@@ -52,6 +52,16 @@ fn mark_check_in_command(app: tauri::AppHandle, input: CheckInInput) -> Result<m
 }
 
 #[tauri::command]
+fn save_onboarding_command(app: tauri::AppHandle, input: OnboardingInput) -> Result<models::OnboardingStateRecord, String> {
+    save_onboarding(&app, input)
+}
+
+#[tauri::command]
+fn save_settings_command(app: tauri::AppHandle, input: UserSettingsInput) -> Result<models::UserSettingsRecord, String> {
+    save_settings(&app, input)
+}
+
+#[tauri::command]
 fn export_entries_csv_command(app: tauri::AppHandle, destination: String) -> Result<String, String> {
     export_entries_csv(&app, &destination)
 }
@@ -80,6 +90,8 @@ pub fn run() {
             delete_debt_command,
             record_debt_payment_command,
             mark_check_in_command,
+            save_onboarding_command,
+            save_settings_command,
             export_entries_csv_command,
             export_debts_csv_command,
             create_backup_command,

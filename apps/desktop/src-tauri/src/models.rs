@@ -61,6 +61,34 @@ pub struct BootstrapPayload {
     pub entries: Vec<EntryRecord>,
     pub debts: Vec<DebtRecord>,
     pub check_ins: Vec<CheckInRecord>,
+    pub onboarding: OnboardingStateRecord,
+    pub settings: UserSettingsRecord,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OnboardingStateRecord {
+    pub has_completed_onboarding: bool,
+    pub onboarding_completed_at: Option<String>,
+    pub daily_check_in_time: Option<String>,
+    pub reminders_enabled: bool,
+    pub daily_review_mode: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UserSettingsRecord {
+    pub default_view: String,
+    pub reminders_enabled: bool,
+    pub reminder_time: String,
+    pub reminder_days: Vec<i64>,
+    pub catch_up_reminder_enabled: bool,
+    pub debt_due_reminder_enabled: bool,
+    pub quiet_hours_start: String,
+    pub quiet_hours_end: String,
+    pub weekend_reminders_enabled: bool,
+    pub catch_up_prompt_mode: String,
+    pub show_advanced_options: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -115,4 +143,29 @@ pub struct CheckInInput {
     pub date: String,
     pub is_partial: bool,
     pub note: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OnboardingInput {
+    pub daily_check_in_time: Option<String>,
+    pub reminders_enabled: bool,
+    pub daily_review_mode: Option<String>,
+    pub selected_category_ids: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UserSettingsInput {
+    pub default_view: String,
+    pub reminders_enabled: bool,
+    pub reminder_time: String,
+    pub reminder_days: Vec<i64>,
+    pub catch_up_reminder_enabled: bool,
+    pub debt_due_reminder_enabled: bool,
+    pub quiet_hours_start: String,
+    pub quiet_hours_end: String,
+    pub weekend_reminders_enabled: bool,
+    pub catch_up_prompt_mode: String,
+    pub show_advanced_options: bool,
 }

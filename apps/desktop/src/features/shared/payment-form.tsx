@@ -63,6 +63,9 @@ export function PaymentForm({
           <Input
             id={`payment-amount-${debt.id}`}
             inputMode="decimal"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
           />
@@ -80,7 +83,12 @@ export function PaymentForm({
 
       <div>
         <Label htmlFor={`payment-note-${debt.id}`}>Note</Label>
-        <Textarea id={`payment-note-${debt.id}`} value={note} onChange={(event) => setNote(event.target.value)} />
+        <Textarea
+          id={`payment-note-${debt.id}`}
+          placeholder="Optional note"
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+        />
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}

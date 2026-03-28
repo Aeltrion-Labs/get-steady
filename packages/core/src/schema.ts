@@ -96,6 +96,32 @@ export const analyticsSummarySchema = z.object({
   cashflowSeries: z.array(cashflowSeriesPointSchema),
 });
 
+export const appViewSchema = z.enum(["today", "calendar", "ledger", "debts", "analytics", "settings"]);
+export const catchUpPromptModeSchema = z.enum(["always", "when_missed", "hidden"]);
+export const dailyReviewModeSchema = z.enum(["simple", "quick"]);
+
+export const onboardingStateSchema = z.object({
+  hasCompletedOnboarding: z.boolean(),
+  onboardingCompletedAt: z.string().nullable().optional(),
+  dailyCheckInTime: z.string().nullable(),
+  remindersEnabled: z.boolean(),
+  dailyReviewMode: dailyReviewModeSchema,
+});
+
+export const userSettingsSchema = z.object({
+  defaultView: appViewSchema,
+  remindersEnabled: z.boolean(),
+  reminderTime: z.string(),
+  reminderDays: z.array(z.number().int().min(0).max(6)),
+  catchUpReminderEnabled: z.boolean(),
+  debtDueReminderEnabled: z.boolean(),
+  quietHoursStart: z.string(),
+  quietHoursEnd: z.string(),
+  weekendRemindersEnabled: z.boolean(),
+  catchUpPromptMode: catchUpPromptModeSchema,
+  showAdvancedOptions: z.boolean(),
+});
+
 export type Category = z.infer<typeof categorySchema>;
 export type CategoryType = z.infer<typeof categoryTypeSchema>;
 export type Entry = z.infer<typeof entrySchema>;
@@ -109,6 +135,11 @@ export type AnalyticsPeriod = z.infer<typeof analyticsPeriodSchema>;
 export type DebtSeriesPoint = z.infer<typeof debtSeriesPointSchema>;
 export type CashflowSeriesPoint = z.infer<typeof cashflowSeriesPointSchema>;
 export type AnalyticsSummary = z.infer<typeof analyticsSummarySchema>;
+export type AppView = z.infer<typeof appViewSchema>;
+export type CatchUpPromptMode = z.infer<typeof catchUpPromptModeSchema>;
+export type DailyReviewMode = z.infer<typeof dailyReviewModeSchema>;
+export type OnboardingState = z.infer<typeof onboardingStateSchema>;
+export type UserSettings = z.infer<typeof userSettingsSchema>;
 
 export const entryInputSchema = entrySchema.omit({
   id: true,
