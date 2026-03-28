@@ -31,7 +31,7 @@ function MetricCard({
   detail: string;
 }) {
   return (
-    <Card className="bg-white/80">
+    <Card className="bg-card/80">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className="mt-3 text-3xl font-semibold text-foreground">{value}</p>
       <p className="mt-2 text-sm text-muted-foreground">{detail}</p>
@@ -95,7 +95,7 @@ export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
         </Badge>
       </div>
 
-      <Card className="space-y-4 bg-white/85">
+      <Card className="space-y-4 bg-card/85">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
@@ -161,7 +161,7 @@ export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
           </div>
           <div className="space-y-3">
             {summary.focusItems.map((item) => (
-              <div key={item} className="rounded-2xl bg-white/80 px-4 py-3 text-sm text-foreground">
+              <div key={item} className="rounded-2xl bg-card/80 px-4 py-3 text-sm text-foreground">
                 {item}
               </div>
             ))}
@@ -200,7 +200,7 @@ export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
           {summary.cashflowSeries.map((period) => (
-            <div key={period.label} className="space-y-4 rounded-[24px] bg-white/80 p-5">
+            <div key={period.label} className="space-y-4 rounded-[24px] bg-card/80 p-5">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-foreground">{period.label}</h3>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">

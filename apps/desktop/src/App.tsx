@@ -7,6 +7,7 @@ import {
   evaluateReminderPlan,
   getMissedCheckInDates,
   type AppView,
+  type ThemeMode,
 } from "@get-steady/core";
 import { save } from "@tauri-apps/plugin-dialog";
 import { ArrowDownCircle, BookOpenText, CalendarDays, ChartColumnIncreasing, CircleDollarSign, Dot, House, Settings2 } from "lucide-react";
@@ -79,12 +80,21 @@ const VIEW_META: Record<AppView, { eyebrow: string; title: string; description: 
   },
 };
 
+function getSystemTheme() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return "light" as const;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 function AppInner() {
   const [currentView, setCurrentView] = useState<AppView>("today");
   const [selectedEntryDate, setSelectedEntryDate] = useState(todayIsoDate());
   const [calendarMonth, setCalendarMonth] = useState(todayIsoDate().slice(0, 7));
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
   const [defaultViewApplied, setDefaultViewApplied] = useState(false);
+  const [systemTheme, setSystemTheme] = useState<"light" | "dark">(() => getSystemTheme());
   const today = todayIsoDate();
 
   const bootstrapQuery = useQuery({
@@ -174,6 +184,33 @@ function AppInner() {
       setDefaultViewApplied(true);
     }
   }, [bootstrapQuery.data, defaultViewApplied]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncTheme = (event?: MediaQueryListEvent) => {
+      setSystemTheme(event?.matches ?? mediaQuery.matches ? "dark" : "light");
+    };
+
+    syncTheme();
+    mediaQuery.addEventListener?.("change", syncTheme);
+    mediaQuery.addListener?.(syncTheme);
+
+    return () => {
+      mediaQuery.removeEventListener?.("change", syncTheme);
+      mediaQuery.removeListener?.(syncTheme);
+    };
+  }, []);
+
+  const themeMode: ThemeMode = bootstrapQuery.data?.settings.themeMode ?? "system";
+  const effectiveTheme = themeMode === "system" ? systemTheme : themeMode;
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = effectiveTheme;
+  }, [effectiveTheme]);
 
   if (bootstrapQuery.isLoading) {
     return (
@@ -318,7 +355,7 @@ function AppInner() {
                       "flex w-full items-center gap-3 rounded-[22px] border px-4 py-3 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                       active
                         ? "border-primary/15 bg-primary text-white shadow-sm"
-                        : "border-transparent bg-white/70 text-foreground hover:border-border hover:bg-muted/85",
+                        : "border-transparent bg-card/70 text-foreground hover:border-border hover:bg-muted/85",
                     )}
                     onClick={() => setCurrentView(item.id)}
                     type="button"
@@ -332,7 +369,7 @@ function AppInner() {
             </div>
           </div>
 
-          <div className="mt-8 rounded-[28px] border border-border bg-white/80 p-4">
+          <div className="mt-8 rounded-[28px] border border-border bg-card/80 p-4">
             <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">This month</p>
             <div className="mt-3 flex items-center gap-3">
               <CircleDollarSign className="h-10 w-10 text-primary" />
@@ -351,11 +388,11 @@ function AppInner() {
           <div className="mt-4 rounded-[28px] border border-border/80 bg-muted/45 p-4">
             <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Current posture</p>
             <div className="mt-3 space-y-3">
-              <div className="flex items-center justify-between rounded-[20px] bg-white/75 px-3 py-3">
+              <div className="flex items-center justify-between rounded-[20px] bg-card/75 px-3 py-3">
                 <span className="text-sm text-muted-foreground">Missed days</span>
                 <span className="font-semibold tabular-nums text-foreground">{missedDates.length}</span>
               </div>
-              <div className="flex items-center justify-between rounded-[20px] bg-white/75 px-3 py-3">
+              <div className="flex items-center justify-between rounded-[20px] bg-card/75 px-3 py-3">
                 <span className="text-sm text-muted-foreground">Debt outstanding</span>
                 <span className="font-semibold tabular-nums text-foreground">{formatCurrency(summary.debtOutstanding)}</span>
               </div>
@@ -382,18 +419,24 @@ function AppInner() {
                 <h2 className="mt-2 font-display text-3xl text-foreground">{activeViewMeta.title}</h2>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{activeViewMeta.description}</p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[430px]">
-                <div className="rounded-[22px] border border-border/80 bg-white/80 px-4 py-3">
+              <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[560px] xl:grid-cols-4">
+                <div className="rounded-[22px] border border-border/80 bg-card/80 px-4 py-3">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Today</p>
                   <p className="mt-2 text-sm font-semibold text-foreground">{today}</p>
                 </div>
-                <div className="rounded-[22px] border border-border/80 bg-white/80 px-4 py-3">
+                <div className="rounded-[22px] border border-border/80 bg-card/80 px-4 py-3">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Check-in</p>
                   <p className="mt-2 text-sm font-semibold text-foreground">{summary.isTodayCheckedIn ? "Closed out" : "Open"}</p>
                 </div>
-                <div className="rounded-[22px] border border-border/80 bg-white/80 px-4 py-3">
+                <div className="rounded-[22px] border border-border/80 bg-card/80 px-4 py-3">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Reminder time</p>
                   <p className="mt-2 text-sm font-semibold text-foreground">{data.settings.reminderTime}</p>
+                </div>
+                <div className="rounded-[22px] border border-border/80 bg-card/80 px-4 py-3">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Theme</p>
+                  <p className="mt-2 text-sm font-semibold capitalize text-foreground">
+                    {themeMode === "system" ? `System (${effectiveTheme})` : themeMode}
+                  </p>
                 </div>
               </div>
             </div>

@@ -23,7 +23,7 @@ type TodayScreenProps = {
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card className="space-y-3 bg-white/80">
+    <Card className="space-y-3 bg-card/80">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className="text-3xl font-semibold tabular-nums text-foreground">{value}</p>
     </Card>
@@ -152,11 +152,11 @@ export function TodayScreen({
               <WalletCards className="mt-1 h-5 w-5 text-primary" />
             </div>
             <div className="grid gap-3">
-              <div className="flex items-center justify-between rounded-[22px] border border-border/70 bg-white/80 px-4 py-3">
+              <div className="flex items-center justify-between rounded-[22px] border border-border/70 bg-card/80 px-4 py-3">
                 <span className="text-sm text-muted-foreground">Money in</span>
                 <strong className="tabular-nums text-foreground">{formatCurrency(summary.monthMoneyIn)}</strong>
               </div>
-              <div className="flex items-center justify-between rounded-[22px] border border-border/70 bg-white/80 px-4 py-3">
+              <div className="flex items-center justify-between rounded-[22px] border border-border/70 bg-card/80 px-4 py-3">
                 <span className="text-sm text-muted-foreground">Money out</span>
                 <strong className="tabular-nums text-foreground">{formatCurrency(summary.monthMoneyOut)}</strong>
               </div>
@@ -179,17 +179,17 @@ export function TodayScreen({
               <RotateCcw className="mt-1 h-5 w-5 text-warning" />
             </div>
             {!showCatchUp ? (
-              <div className="rounded-[22px] border border-border/70 bg-white/80 px-4 py-4 text-sm text-muted-foreground">
+              <div className="rounded-[22px] border border-border/70 bg-card/80 px-4 py-4 text-sm text-muted-foreground">
                 Catch-up prompts are hidden in Settings. You can still backfill from Calendar or Ledger.
               </div>
             ) : missedDates.length === 0 ? (
-              <div className="rounded-[22px] border border-border/70 bg-white/80 px-4 py-4 text-sm text-muted-foreground">No missed days right now.</div>
+              <div className="rounded-[22px] border border-border/70 bg-card/80 px-4 py-4 text-sm text-muted-foreground">No missed days right now.</div>
             ) : (
               <div className="space-y-3">
                 {missedDates.map((date) => (
                   <div
                     key={date}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-warning/20 bg-white/90 px-4 py-4"
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-warning/20 bg-card/90 px-4 py-4"
                   >
                     <div className="flex items-start gap-3">
                       <div className="rounded-full bg-warning/15 p-2 text-warning">

@@ -79,6 +79,7 @@ pub struct OnboardingStateRecord {
 #[serde(rename_all = "camelCase")]
 pub struct UserSettingsRecord {
     pub default_view: String,
+    pub theme_mode: String,
     pub reminders_enabled: bool,
     pub reminder_time: String,
     pub reminder_days: Vec<i64>,
@@ -158,6 +159,7 @@ pub struct OnboardingInput {
 #[serde(rename_all = "camelCase")]
 pub struct UserSettingsInput {
     pub default_view: String,
+    pub theme_mode: String,
     pub reminders_enabled: bool,
     pub reminder_time: String,
     pub reminder_days: Vec<i64>,

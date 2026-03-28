@@ -26,7 +26,7 @@ function getDayTone(day: CalendarDay, isActive: boolean) {
     return "border-primary/40 bg-accent/80 shadow-sm";
   }
   if (day.state === "missed") {
-    return "border-warning/35 bg-amber-50/80 hover:bg-amber-50";
+    return "border-warning/35 bg-warning/12 hover:bg-warning/18";
   }
   if (day.state === "partial") {
     return "border-primary/20 bg-accent/55 hover:bg-accent/75";
@@ -93,11 +93,11 @@ export function CalendarScreen({
               <h2 className="font-display text-2xl text-foreground">Recovery lane</h2>
               <p className="text-sm text-muted-foreground">Missing days are warning-toned, not failure-toned.</p>
             </div>
-            <Badge className="border-warning/30 bg-amber-50 text-amber-800">{calendar.recovery.missedCount} missed</Badge>
+            <Badge className="border-warning/30 bg-warning/15 text-warning-foreground">{calendar.recovery.missedCount} missed</Badge>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-[24px] border border-warning/25 bg-amber-50/80 px-4 py-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-amber-800/70">Oldest missed day</p>
+            <div className="rounded-[24px] border border-warning/25 bg-warning/12 px-4 py-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-warning-foreground/75">Oldest missed day</p>
               <p className="mt-2 text-lg font-semibold text-foreground">
                 {calendar.recovery.oldestMissedDate ? formatShortDate(calendar.recovery.oldestMissedDate) : "Nothing pending"}
               </p>
@@ -127,7 +127,7 @@ export function CalendarScreen({
               <Badge
                 className={
                   activeDay.state === "missed"
-                    ? "border-warning/30 bg-amber-50 text-amber-800"
+                    ? "border-warning/30 bg-warning/15 text-warning-foreground"
                     : activeDay.state === "partial"
                       ? "border-primary/20 bg-accent text-primary"
                       : "border-border bg-muted text-foreground"
@@ -187,7 +187,7 @@ export function CalendarScreen({
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
             <span className="rounded-full border border-border bg-card px-3 py-1">Complete</span>
             <span className="rounded-full border border-primary/20 bg-accent/70 px-3 py-1">Partial</span>
-            <span className="rounded-full border border-warning/30 bg-amber-50 px-3 py-1 text-amber-800">Missed</span>
+            <span className="rounded-full border border-warning/30 bg-warning/15 px-3 py-1 text-warning-foreground">Missed</span>
           </div>
         </div>
         <div className="grid grid-cols-7 gap-2 text-center text-xs uppercase tracking-[0.16em] text-muted-foreground">
@@ -213,8 +213,8 @@ export function CalendarScreen({
                 <div className="mt-4 space-y-2">
                   <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{day.state}</div>
                   <div className="flex flex-wrap gap-1">
-                    {day.hasEntries ? <span className="rounded-full bg-white/75 px-2 py-1 text-[10px] text-muted-foreground">Logged</span> : null}
-                    {day.hasDebtPayment ? <span className="rounded-full bg-white/75 px-2 py-1 text-[10px] text-muted-foreground">Debt</span> : null}
+                    {day.hasEntries ? <span className="rounded-full bg-card/75 px-2 py-1 text-[10px] text-muted-foreground">Logged</span> : null}
+                    {day.hasDebtPayment ? <span className="rounded-full bg-card/75 px-2 py-1 text-[10px] text-muted-foreground">Debt</span> : null}
                   </div>
                 </div>
               </button>

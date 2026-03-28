@@ -146,9 +146,31 @@ export function SettingsScreen({
                 <option value="calendar">Calendar</option>
                 <option value="ledger">Ledger</option>
                 <option value="debts">Debts</option>
+                <option value="analytics">Analytics</option>
                 <option value="settings">Settings</option>
               </Select>
             </div>
+            <div className="rounded-[22px] border border-border bg-muted/25 p-4">
+              <Label htmlFor="theme-mode">Theme mode</Label>
+              <Select
+                className="mt-3"
+                id="theme-mode"
+                value={draft.themeMode}
+                onChange={(event) =>
+                  void persist({
+                    ...draft,
+                    themeMode: event.target.value as UserSettings["themeMode"],
+                  })
+                }
+              >
+                <option value="system">System</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-[22px] border border-border bg-muted/25 p-4">
               <Label htmlFor="catch-up-prompt-mode">Catch-up prompt mode</Label>
               <Select

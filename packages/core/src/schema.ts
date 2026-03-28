@@ -99,6 +99,7 @@ export const analyticsSummarySchema = z.object({
 export const appViewSchema = z.enum(["today", "calendar", "ledger", "debts", "analytics", "settings"]);
 export const catchUpPromptModeSchema = z.enum(["always", "when_missed", "hidden"]);
 export const dailyReviewModeSchema = z.enum(["simple", "quick"]);
+export const themeModeSchema = z.enum(["system", "light", "dark"]);
 
 export const onboardingStateSchema = z.object({
   hasCompletedOnboarding: z.boolean(),
@@ -110,6 +111,7 @@ export const onboardingStateSchema = z.object({
 
 export const userSettingsSchema = z.object({
   defaultView: appViewSchema,
+  themeMode: themeModeSchema,
   remindersEnabled: z.boolean(),
   reminderTime: z.string(),
   reminderDays: z.array(z.number().int().min(0).max(6)),
@@ -138,6 +140,7 @@ export type AnalyticsSummary = z.infer<typeof analyticsSummarySchema>;
 export type AppView = z.infer<typeof appViewSchema>;
 export type CatchUpPromptMode = z.infer<typeof catchUpPromptModeSchema>;
 export type DailyReviewMode = z.infer<typeof dailyReviewModeSchema>;
+export type ThemeMode = z.infer<typeof themeModeSchema>;
 export type OnboardingState = z.infer<typeof onboardingStateSchema>;
 export type UserSettings = z.infer<typeof userSettingsSchema>;
 

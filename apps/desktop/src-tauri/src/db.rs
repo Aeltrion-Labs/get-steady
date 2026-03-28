@@ -10,7 +10,7 @@ use tauri::{AppHandle, Manager};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-const SCHEMA_VERSION: i64 = 4;
+const SCHEMA_VERSION: i64 = 5;
 
 pub struct AppPaths {
     pub backup_dir: PathBuf,
@@ -178,6 +178,7 @@ fn run_migrations(connection: &Connection) -> Result<(), String> {
                   reminders_enabled INTEGER NOT NULL DEFAULT 1,
                   daily_review_mode TEXT NOT NULL DEFAULT 'simple',
                   default_view TEXT NOT NULL DEFAULT 'today',
+                  theme_mode TEXT NOT NULL DEFAULT 'system',
                   reminder_time TEXT NOT NULL DEFAULT '19:00',
                   reminder_days TEXT NOT NULL DEFAULT '0,1,2,3,4,5,6',
                   catch_up_reminder_enabled INTEGER NOT NULL DEFAULT 1,
@@ -203,6 +204,30 @@ fn run_migrations(connection: &Connection) -> Result<(), String> {
 
     if applied < 4 {
         repair_legacy_money_columns(connection)?;
+        connection
+            .execute(
+                "INSERT OR REPLACE INTO schema_migrations (version, applied_at) VALUES (?1, ?2)",
+                params![SCHEMA_VERSION, now()],
+            )
+            .map_err(|error| format!("failed to record migration version: {error}"))?;
+    }
+
+    if applied < 5 {
+        connection
+            .execute_batch(
+                "
+                ALTER TABLE user_settings ADD COLUMN theme_mode TEXT NOT NULL DEFAULT 'system';
+                ",
+            )
+            .or_else(|error| {
+                if error.to_string().contains("duplicate column name") {
+                    Ok(())
+                } else {
+                    Err(error)
+                }
+            })
+            .map_err(|error| format!("failed to add theme mode column: {error}"))?;
+
         connection
             .execute(
                 "INSERT OR REPLACE INTO schema_migrations (version, applied_at) VALUES (?1, ?2)",
@@ -245,8 +270,9 @@ fn repair_legacy_money_columns(connection: &Connection) -> Result<(), String> {
               daily_check_in_time TEXT,
               reminders_enabled INTEGER NOT NULL DEFAULT 1,
               daily_review_mode TEXT NOT NULL DEFAULT 'simple',
-              default_view TEXT NOT NULL DEFAULT 'today',
-              reminder_time TEXT NOT NULL DEFAULT '19:00',
+                  default_view TEXT NOT NULL DEFAULT 'today',
+                  theme_mode TEXT NOT NULL DEFAULT 'system',
+                  reminder_time TEXT NOT NULL DEFAULT '19:00',
               reminder_days TEXT NOT NULL DEFAULT '0,1,2,3,4,5,6',
               catch_up_reminder_enabled INTEGER NOT NULL DEFAULT 1,
               debt_due_reminder_enabled INTEGER NOT NULL DEFAULT 1,
@@ -365,6 +391,7 @@ fn seed_user_settings(connection: &Connection) -> Result<(), String> {
               reminders_enabled,
               daily_review_mode,
               default_view,
+              theme_mode,
               reminder_time,
               reminder_days,
               catch_up_reminder_enabled,
@@ -376,7 +403,7 @@ fn seed_user_settings(connection: &Connection) -> Result<(), String> {
               show_advanced_options,
               updated_at
             )
-            VALUES (1, 0, NULL, '19:00', 1, 'simple', 'today', '19:00', '0,1,2,3,4,5,6', 1, 1, '21:30', '08:00', 1, 'when_missed', 0, ?1)
+            VALUES (1, 0, NULL, '19:00', 1, 'simple', 'today', 'system', '19:00', '0,1,2,3,4,5,6', 1, 1, '21:30', '08:00', 1, 'when_missed', 0, ?1)
             ",
             params![now()],
         )
@@ -445,19 +472,20 @@ fn onboarding_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<OnboardingStateRe
 }
 
 fn settings_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<UserSettingsRecord> {
-    let reminder_days: String = row.get(3)?;
+    let reminder_days: String = row.get(4)?;
     Ok(UserSettingsRecord {
         default_view: row.get(0)?,
-        reminders_enabled: row.get::<_, i64>(1)? == 1,
-        reminder_time: row.get(2)?,
+        theme_mode: row.get(1)?,
+        reminders_enabled: row.get::<_, i64>(2)? == 1,
+        reminder_time: row.get(3)?,
         reminder_days: parse_reminder_days(&reminder_days),
-        catch_up_reminder_enabled: row.get::<_, i64>(4)? == 1,
-        debt_due_reminder_enabled: row.get::<_, i64>(5)? == 1,
-        quiet_hours_start: row.get(6)?,
-        quiet_hours_end: row.get(7)?,
-        weekend_reminders_enabled: row.get::<_, i64>(8)? == 1,
-        catch_up_prompt_mode: row.get(9)?,
-        show_advanced_options: row.get::<_, i64>(10)? == 1,
+        catch_up_reminder_enabled: row.get::<_, i64>(5)? == 1,
+        debt_due_reminder_enabled: row.get::<_, i64>(6)? == 1,
+        quiet_hours_start: row.get(7)?,
+        quiet_hours_end: row.get(8)?,
+        weekend_reminders_enabled: row.get::<_, i64>(9)? == 1,
+        catch_up_prompt_mode: row.get(10)?,
+        show_advanced_options: row.get::<_, i64>(11)? == 1,
     })
 }
 
@@ -561,7 +589,7 @@ fn get_onboarding(connection: &Connection) -> Result<OnboardingStateRecord, Stri
 fn get_settings(connection: &Connection) -> Result<UserSettingsRecord, String> {
     connection
         .query_row(
-            "SELECT default_view, reminders_enabled, reminder_time, reminder_days, catch_up_reminder_enabled, debt_due_reminder_enabled, quiet_hours_start, quiet_hours_end, weekend_reminders_enabled, catch_up_prompt_mode, show_advanced_options FROM user_settings WHERE id = 1",
+            "SELECT default_view, theme_mode, reminders_enabled, reminder_time, reminder_days, catch_up_reminder_enabled, debt_due_reminder_enabled, quiet_hours_start, quiet_hours_end, weekend_reminders_enabled, catch_up_prompt_mode, show_advanced_options FROM user_settings WHERE id = 1",
             [],
             settings_row,
         )
@@ -620,21 +648,23 @@ pub fn save_settings(app: &AppHandle, input: UserSettingsInput) -> Result<UserSe
             "
             UPDATE user_settings
             SET default_view = ?1,
-                reminders_enabled = ?2,
-                reminder_time = ?3,
-                reminder_days = ?4,
-                catch_up_reminder_enabled = ?5,
-                debt_due_reminder_enabled = ?6,
-                quiet_hours_start = ?7,
-                quiet_hours_end = ?8,
-                weekend_reminders_enabled = ?9,
-                catch_up_prompt_mode = ?10,
-                show_advanced_options = ?11,
-                updated_at = ?12
+                theme_mode = ?2,
+                reminders_enabled = ?3,
+                reminder_time = ?4,
+                reminder_days = ?5,
+                catch_up_reminder_enabled = ?6,
+                debt_due_reminder_enabled = ?7,
+                quiet_hours_start = ?8,
+                quiet_hours_end = ?9,
+                weekend_reminders_enabled = ?10,
+                catch_up_prompt_mode = ?11,
+                show_advanced_options = ?12,
+                updated_at = ?13
             WHERE id = 1
             ",
             params![
                 input.default_view,
+                input.theme_mode,
                 if input.reminders_enabled { 1 } else { 0 },
                 input.reminder_time,
                 serialize_reminder_days(&input.reminder_days),
@@ -1059,7 +1089,7 @@ mod tests {
             .expect("schema version");
 
         assert_eq!(settings_count, 1);
-        assert_eq!(version, 4);
+        assert_eq!(version, 5);
     }
 
     #[test]
@@ -1139,12 +1169,107 @@ mod tests {
             .query_row("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1", [], |row| row.get(0))
             .expect("schema version");
 
-        assert_eq!(version, 4);
+        assert_eq!(version, 5);
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].amount, 125.0);
         assert_eq!(debts.len(), 1);
         assert_eq!(debts[0].balance_current, 875.0);
         assert_eq!(debts[0].interest_rate, Some(21.5));
         assert_eq!(debts[0].minimum_payment, Some(55.0));
+    }
+
+    #[test]
+    fn run_migrations_adds_theme_mode_for_bootstrapped_settings() {
+        let connection = Connection::open_in_memory().expect("in-memory database");
+        connection
+            .execute_batch(
+                "
+                CREATE TABLE schema_migrations (
+                  version INTEGER PRIMARY KEY,
+                  applied_at TEXT NOT NULL
+                );
+
+                INSERT INTO schema_migrations (version, applied_at) VALUES (4, '2026-03-27T00:00:00Z');
+
+                CREATE TABLE categories (
+                  id TEXT PRIMARY KEY,
+                  name TEXT NOT NULL,
+                  type TEXT NOT NULL,
+                  created_at TEXT NOT NULL,
+                  updated_at TEXT NOT NULL
+                );
+
+                CREATE TABLE user_settings (
+                  id INTEGER PRIMARY KEY CHECK (id = 1),
+                  has_completed_onboarding INTEGER NOT NULL DEFAULT 0,
+                  onboarding_completed_at TEXT,
+                  daily_check_in_time TEXT,
+                  reminders_enabled INTEGER NOT NULL DEFAULT 1,
+                  daily_review_mode TEXT NOT NULL DEFAULT 'simple',
+                  default_view TEXT NOT NULL DEFAULT 'today',
+                  reminder_time TEXT NOT NULL DEFAULT '19:00',
+                  reminder_days TEXT NOT NULL DEFAULT '0,1,2,3,4,5,6',
+                  catch_up_reminder_enabled INTEGER NOT NULL DEFAULT 1,
+                  debt_due_reminder_enabled INTEGER NOT NULL DEFAULT 1,
+                  quiet_hours_start TEXT NOT NULL DEFAULT '21:30',
+                  quiet_hours_end TEXT NOT NULL DEFAULT '08:00',
+                  weekend_reminders_enabled INTEGER NOT NULL DEFAULT 1,
+                  catch_up_prompt_mode TEXT NOT NULL DEFAULT 'when_missed',
+                  show_advanced_options INTEGER NOT NULL DEFAULT 0,
+                  updated_at TEXT NOT NULL
+                );
+
+                INSERT INTO user_settings (
+                  id,
+                  has_completed_onboarding,
+                  onboarding_completed_at,
+                  daily_check_in_time,
+                  reminders_enabled,
+                  daily_review_mode,
+                  default_view,
+                  reminder_time,
+                  reminder_days,
+                  catch_up_reminder_enabled,
+                  debt_due_reminder_enabled,
+                  quiet_hours_start,
+                  quiet_hours_end,
+                  weekend_reminders_enabled,
+                  catch_up_prompt_mode,
+                  show_advanced_options,
+                  updated_at
+                ) VALUES (
+                  1,
+                  1,
+                  '2026-03-01T00:00:00Z',
+                  '18:30',
+                  1,
+                  'simple',
+                  'today',
+                  '18:30',
+                  '1,2,3,4,5',
+                  1,
+                  1,
+                  '22:00',
+                  '07:00',
+                  1,
+                  'when_missed',
+                  0,
+                  '2026-03-27T00:00:00Z'
+                );
+                ",
+            )
+            .expect("legacy settings schema");
+
+        run_migrations(&connection).expect("migration success");
+
+        let theme_mode: String = connection
+            .query_row("SELECT theme_mode FROM user_settings WHERE id = 1", [], |row| row.get(0))
+            .expect("theme mode");
+        let version: i64 = connection
+            .query_row("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1", [], |row| row.get(0))
+            .expect("schema version");
+
+        assert_eq!(theme_mode, "system");
+        assert_eq!(version, 5);
     }
 }
