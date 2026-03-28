@@ -10,7 +10,7 @@ use tauri::{AppHandle, Manager};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-const SCHEMA_VERSION: i64 = 3;
+const SCHEMA_VERSION: i64 = 4;
 
 pub struct AppPaths {
     pub backup_dir: PathBuf,
@@ -201,8 +201,131 @@ fn run_migrations(connection: &Connection) -> Result<(), String> {
             .map_err(|error| format!("failed to record migration version: {error}"))?;
     }
 
+    if applied < 4 {
+        repair_legacy_money_columns(connection)?;
+        connection
+            .execute(
+                "INSERT OR REPLACE INTO schema_migrations (version, applied_at) VALUES (?1, ?2)",
+                params![SCHEMA_VERSION, now()],
+            )
+            .map_err(|error| format!("failed to record migration version: {error}"))?;
+    }
+
     seed_categories(connection)?;
     seed_user_settings(connection)?;
+    Ok(())
+}
+
+fn table_has_column(connection: &Connection, table: &str, column: &str) -> Result<bool, String> {
+    let pragma = format!("PRAGMA table_info({table})");
+    let mut statement = connection
+        .prepare(&pragma)
+        .map_err(|error| format!("failed to inspect table {table}: {error}"))?;
+    let rows = statement
+        .query_map([], |row| row.get::<_, String>(1))
+        .map_err(|error| format!("failed to query table info for {table}: {error}"))?;
+
+    for row in rows {
+        if row.map_err(|error| format!("failed to read table info for {table}: {error}"))? == column {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
+fn repair_legacy_money_columns(connection: &Connection) -> Result<(), String> {
+    connection
+        .execute_batch(
+            "
+            CREATE TABLE IF NOT EXISTS user_settings (
+              id INTEGER PRIMARY KEY CHECK (id = 1),
+              has_completed_onboarding INTEGER NOT NULL DEFAULT 0,
+              onboarding_completed_at TEXT,
+              daily_check_in_time TEXT,
+              reminders_enabled INTEGER NOT NULL DEFAULT 1,
+              daily_review_mode TEXT NOT NULL DEFAULT 'simple',
+              default_view TEXT NOT NULL DEFAULT 'today',
+              reminder_time TEXT NOT NULL DEFAULT '19:00',
+              reminder_days TEXT NOT NULL DEFAULT '0,1,2,3,4,5,6',
+              catch_up_reminder_enabled INTEGER NOT NULL DEFAULT 1,
+              debt_due_reminder_enabled INTEGER NOT NULL DEFAULT 1,
+              quiet_hours_start TEXT NOT NULL DEFAULT '21:30',
+              quiet_hours_end TEXT NOT NULL DEFAULT '08:00',
+              weekend_reminders_enabled INTEGER NOT NULL DEFAULT 1,
+              catch_up_prompt_mode TEXT NOT NULL DEFAULT 'when_missed',
+              show_advanced_options INTEGER NOT NULL DEFAULT 0,
+              updated_at TEXT NOT NULL
+            );
+            ",
+        )
+        .map_err(|error| format!("failed to ensure user settings table during legacy repair: {error}"))?;
+
+    if table_has_column(connection, "entries", "amount_cents")? && !table_has_column(connection, "entries", "amount")? {
+        connection
+            .execute_batch(
+                "
+                ALTER TABLE entries ADD COLUMN amount REAL;
+                UPDATE entries
+                SET amount = amount_cents / 100.0
+                WHERE amount IS NULL;
+                ",
+            )
+            .map_err(|error| format!("failed to migrate entry amounts: {error}"))?;
+    }
+
+    if table_has_column(connection, "debts", "starting_balance_cents")? && !table_has_column(connection, "debts", "balance_current")? {
+        connection
+            .execute_batch(
+                "
+                ALTER TABLE debts ADD COLUMN balance_current REAL;
+                UPDATE debts
+                SET balance_current = MAX(
+                  (
+                    starting_balance_cents - COALESCE(
+                      (
+                        SELECT SUM(amount_cents)
+                        FROM entries
+                        WHERE entries.debt_id = debts.id
+                          AND entries.type = 'debt_payment'
+                      ),
+                      0
+                    )
+                  ) / 100.0,
+                  0
+                )
+                WHERE balance_current IS NULL;
+                ",
+            )
+            .map_err(|error| format!("failed to migrate debt balances: {error}"))?;
+    }
+
+    if table_has_column(connection, "debts", "interest_rate_bps")? && !table_has_column(connection, "debts", "interest_rate")? {
+        connection
+            .execute_batch(
+                "
+                ALTER TABLE debts ADD COLUMN interest_rate REAL;
+                UPDATE debts
+                SET interest_rate = interest_rate_bps / 100.0
+                WHERE interest_rate IS NULL;
+                ",
+            )
+            .map_err(|error| format!("failed to migrate debt interest rates: {error}"))?;
+    }
+
+    if table_has_column(connection, "debts", "minimum_payment_cents")? && !table_has_column(connection, "debts", "minimum_payment")? {
+        connection
+            .execute_batch(
+                "
+                ALTER TABLE debts ADD COLUMN minimum_payment REAL;
+                UPDATE debts
+                SET minimum_payment = minimum_payment_cents / 100.0
+                WHERE minimum_payment IS NULL;
+                ",
+            )
+            .map_err(|error| format!("failed to migrate debt minimum payments: {error}"))?;
+    }
+
     Ok(())
 }
 
@@ -936,6 +1059,92 @@ mod tests {
             .expect("schema version");
 
         assert_eq!(settings_count, 1);
-        assert_eq!(version, 3);
+        assert_eq!(version, 4);
+    }
+
+    #[test]
+    fn run_migrations_repairs_legacy_cents_schema_for_boot_queries() {
+        let connection = Connection::open_in_memory().expect("in-memory database");
+        connection
+            .execute_batch(
+                "
+                CREATE TABLE schema_migrations (
+                  version INTEGER PRIMARY KEY,
+                  applied_at TEXT NOT NULL
+                );
+
+                INSERT INTO schema_migrations (version, applied_at) VALUES (3, '2026-03-27T00:00:00Z');
+
+                CREATE TABLE categories (
+                  id TEXT PRIMARY KEY,
+                  name TEXT NOT NULL UNIQUE,
+                  type TEXT NOT NULL
+                );
+
+                CREATE TABLE debts (
+                  id TEXT PRIMARY KEY,
+                  name TEXT NOT NULL,
+                  lender TEXT,
+                  starting_balance_cents INTEGER NOT NULL,
+                  interest_rate_bps INTEGER,
+                  minimum_payment_cents INTEGER,
+                  due_day INTEGER,
+                  created_at TEXT NOT NULL,
+                  updated_at TEXT NOT NULL,
+                  is_active INTEGER NOT NULL DEFAULT 1
+                );
+
+                CREATE TABLE entries (
+                  id TEXT PRIMARY KEY,
+                  type TEXT NOT NULL,
+                  amount_cents INTEGER NOT NULL,
+                  category_id TEXT,
+                  debt_id TEXT,
+                  note TEXT,
+                  entry_date TEXT NOT NULL,
+                  created_at TEXT NOT NULL,
+                  updated_at TEXT NOT NULL,
+                  source TEXT NOT NULL,
+                  is_estimated INTEGER NOT NULL DEFAULT 0
+                );
+
+                CREATE TABLE check_ins (
+                  date TEXT PRIMARY KEY,
+                  completed INTEGER NOT NULL DEFAULT 1,
+                  completed_at TEXT,
+                  is_partial INTEGER NOT NULL DEFAULT 0,
+                  note TEXT
+                );
+
+                INSERT INTO debts (
+                  id, name, lender, starting_balance_cents, interest_rate_bps, minimum_payment_cents, due_day, created_at, updated_at, is_active
+                ) VALUES (
+                  'debt-1', 'Visa', 'Bank', 100000, 2150, 5500, 12, '2026-03-01T00:00:00Z', '2026-03-01T00:00:00Z', 1
+                );
+
+                INSERT INTO entries (
+                  id, type, amount_cents, category_id, debt_id, note, entry_date, created_at, updated_at, source, is_estimated
+                ) VALUES (
+                  'entry-1', 'debt_payment', 12500, 'cat-debt-payment', 'debt-1', 'payment', '2026-03-27', '2026-03-27T00:00:00Z', '2026-03-27T00:00:00Z', 'manual', 0
+                );
+                ",
+            )
+            .expect("legacy cents schema setup");
+
+        run_migrations(&connection).expect("migration success");
+
+        let entries = list_entries(&connection, None).expect("entries list");
+        let debts = list_debts(&connection).expect("debts list");
+        let version: i64 = connection
+            .query_row("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1", [], |row| row.get(0))
+            .expect("schema version");
+
+        assert_eq!(version, 4);
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].amount, 125.0);
+        assert_eq!(debts.len(), 1);
+        assert_eq!(debts[0].balance_current, 875.0);
+        assert_eq!(debts[0].interest_rate, Some(21.5));
+        assert_eq!(debts[0].minimum_payment, Some(55.0));
     }
 }
