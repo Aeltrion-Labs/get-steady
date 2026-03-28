@@ -10,7 +10,7 @@ use tauri::{AppHandle, Manager};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-const SCHEMA_VERSION: i64 = 2;
+const SCHEMA_VERSION: i64 = 3;
 
 pub struct AppPaths {
     pub backup_dir: PathBuf,
@@ -83,7 +83,9 @@ fn run_migrations(connection: &Connection) -> Result<(), String> {
         .optional()
         .map_err(|error| format!("failed to read migration state: {error}"))?;
 
-    if applied.unwrap_or_default() < SCHEMA_VERSION {
+    let applied = applied.unwrap_or_default();
+
+    if applied < 2 {
         connection
             .execute_batch(
                 "
@@ -155,6 +157,41 @@ fn run_migrations(connection: &Connection) -> Result<(), String> {
                 ",
             )
             .map_err(|error| format!("failed to apply schema migration: {error}"))?;
+
+        connection
+            .execute(
+                "INSERT OR REPLACE INTO schema_migrations (version, applied_at) VALUES (?1, ?2)",
+                params![2_i64, now()],
+            )
+            .map_err(|error| format!("failed to record migration version: {error}"))?;
+    }
+
+    if applied < 3 {
+        connection
+            .execute_batch(
+                "
+                CREATE TABLE IF NOT EXISTS user_settings (
+                  id INTEGER PRIMARY KEY CHECK (id = 1),
+                  has_completed_onboarding INTEGER NOT NULL DEFAULT 0,
+                  onboarding_completed_at TEXT,
+                  daily_check_in_time TEXT,
+                  reminders_enabled INTEGER NOT NULL DEFAULT 1,
+                  daily_review_mode TEXT NOT NULL DEFAULT 'simple',
+                  default_view TEXT NOT NULL DEFAULT 'today',
+                  reminder_time TEXT NOT NULL DEFAULT '19:00',
+                  reminder_days TEXT NOT NULL DEFAULT '0,1,2,3,4,5,6',
+                  catch_up_reminder_enabled INTEGER NOT NULL DEFAULT 1,
+                  debt_due_reminder_enabled INTEGER NOT NULL DEFAULT 1,
+                  quiet_hours_start TEXT NOT NULL DEFAULT '21:30',
+                  quiet_hours_end TEXT NOT NULL DEFAULT '08:00',
+                  weekend_reminders_enabled INTEGER NOT NULL DEFAULT 1,
+                  catch_up_prompt_mode TEXT NOT NULL DEFAULT 'when_missed',
+                  show_advanced_options INTEGER NOT NULL DEFAULT 0,
+                  updated_at TEXT NOT NULL
+                );
+                ",
+            )
+            .map_err(|error| format!("failed to apply user settings migration: {error}"))?;
 
         connection
             .execute(
@@ -865,5 +902,40 @@ mod tests {
             .expect("table count");
 
         assert_eq!(table_count, 6);
+    }
+
+    #[test]
+    fn run_migrations_upgrades_legacy_v2_database_with_user_settings() {
+        let connection = Connection::open_in_memory().expect("in-memory database");
+        connection
+            .execute_batch(
+                "
+                CREATE TABLE schema_migrations (
+                  version INTEGER PRIMARY KEY,
+                  applied_at TEXT NOT NULL
+                );
+
+                INSERT INTO schema_migrations (version, applied_at) VALUES (2, '2026-03-27T00:00:00Z');
+
+                CREATE TABLE categories (
+                  id TEXT PRIMARY KEY,
+                  name TEXT NOT NULL UNIQUE,
+                  type TEXT NOT NULL
+                );
+                ",
+            )
+            .expect("legacy schema setup");
+
+        run_migrations(&connection).expect("migration success");
+
+        let settings_count: i64 = connection
+            .query_row("SELECT COUNT(*) FROM user_settings", [], |row| row.get(0))
+            .expect("user settings count");
+        let version: i64 = connection
+            .query_row("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1", [], |row| row.get(0))
+            .expect("schema version");
+
+        assert_eq!(settings_count, 1);
+        assert_eq!(version, 3);
     }
 }
