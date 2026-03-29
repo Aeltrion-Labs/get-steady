@@ -4,6 +4,14 @@
   "version": "0.1.0",
   "description": "Local-first desktop app for building a steady daily money habit.",
   "license": "MIT",
+  "homepage": "https://github.com/Aeltrion-Labs/get-steady#readme",
+  "bugs": {
+    "url": "https://github.com/Aeltrion-Labs/get-steady/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aeltrion-Labs/get-steady.git"
+  },
   "packageManager": "pnpm@10.25.0",
   "engines": {
     "node": ">=22.0.0",
