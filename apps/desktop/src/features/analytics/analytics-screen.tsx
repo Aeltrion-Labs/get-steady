@@ -21,15 +21,7 @@ function formatMonths(value: number | null) {
   return `${value.toFixed(1)} months`;
 }
 
-function MetricCard({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-}) {
+function MetricCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
     <Card className="bg-card/80">
       <p className="text-sm text-muted-foreground">{label}</p>
@@ -70,7 +62,10 @@ function SeriesBar({
 }
 
 export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
-  const cashflowMax = Math.max(...summary.cashflowSeries.flatMap((item) => [item.income, item.outflow]), 0);
+  const cashflowMax = Math.max(
+    ...summary.cashflowSeries.flatMap((item) => [item.income, item.outflow]),
+    0,
+  );
   const debtMax = Math.max(...summary.debtSeries.map((item) => item.value), 0);
 
   return (
@@ -102,7 +97,9 @@ export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
               <Gauge className="h-5 w-5 text-primary" />
               <h2 className="font-display text-3xl text-foreground">Where things stand</h2>
             </div>
-            <p className="max-w-3xl text-xl font-semibold text-foreground">{summary.primaryMessage}</p>
+            <p className="max-w-3xl text-xl font-semibold text-foreground">
+              {summary.primaryMessage}
+            </p>
             <p className="max-w-3xl text-sm text-muted-foreground">{summary.secondaryMessage}</p>
           </div>
           <div
@@ -120,7 +117,9 @@ export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
         <div
           className={cn(
             "flex items-start gap-3 rounded-2xl px-4 py-3 text-sm",
-            summary.hasDataConfidenceWarning ? "bg-warning/15 text-warning-foreground" : "bg-muted text-muted-foreground",
+            summary.hasDataConfidenceWarning
+              ? "bg-warning/15 text-warning-foreground"
+              : "bg-muted text-muted-foreground",
           )}
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -171,7 +170,9 @@ export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
         <Card className="space-y-5">
           <div>
             <h2 className="font-display text-2xl text-foreground">Debt trajectory</h2>
-            <p className="text-sm text-muted-foreground">Current balance alongside this month’s debt payment effort.</p>
+            <p className="text-sm text-muted-foreground">
+              Current balance alongside this month’s debt payment effort.
+            </p>
           </div>
           <div className="space-y-4">
             {summary.debtSeries.map((item) => (
@@ -191,11 +192,16 @@ export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 className="font-display text-2xl text-foreground">Month vs last month</h2>
-            <p className="text-sm text-muted-foreground">Income and outflow stay visible, but only to help you see whether things are settling down.</p>
+            <p className="text-sm text-muted-foreground">
+              Income and outflow stay visible, but only to help you see whether things are settling
+              down.
+            </p>
           </div>
           <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
             <CircleDollarSign className="h-4 w-4" />
-            <span>{summary.previousMonth.label} to {summary.currentMonth.label}</span>
+            <span>
+              {summary.previousMonth.label} to {summary.currentMonth.label}
+            </span>
           </div>
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
@@ -208,8 +214,18 @@ export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
                   <span>{formatCurrency(period.netMargin)} net</span>
                 </div>
               </div>
-              <SeriesBar label="Money in" value={period.income} maxValue={cashflowMax} tone="primary" />
-              <SeriesBar label="Money out" value={period.outflow} maxValue={cashflowMax} tone="warning" />
+              <SeriesBar
+                label="Money in"
+                value={period.income}
+                maxValue={cashflowMax}
+                tone="primary"
+              />
+              <SeriesBar
+                label="Money out"
+                value={period.outflow}
+                maxValue={cashflowMax}
+                tone="warning"
+              />
             </div>
           ))}
         </div>

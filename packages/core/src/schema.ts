@@ -2,9 +2,21 @@ import { z } from "zod";
 
 export const entryTypeSchema = z.enum(["income", "expense", "debt_payment"]);
 export const categoryTypeSchema = z.enum(["income", "expense", "both"]);
-export const entrySourceSchema = z.enum(["manual", "catch_up", "seed", "import", "api", "cli", "mcp"]);
-export const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected date in YYYY-MM-DD format.");
-export const hhmmTimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Expected time in HH:MM format.");
+export const entrySourceSchema = z.enum([
+  "manual",
+  "catch_up",
+  "seed",
+  "import",
+  "api",
+  "cli",
+  "mcp",
+]);
+export const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected date in YYYY-MM-DD format.");
+export const hhmmTimeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Expected time in HH:MM format.");
 
 export const categorySchema = z.object({
   id: z.string(),
@@ -58,7 +70,12 @@ export const todaySummarySchema = z.object({
   isTodayCheckedIn: z.boolean(),
 });
 
-export const missionStatusSchema = z.enum(["on_track", "cashflow_negative", "debt_stalled", "high_risk"]);
+export const missionStatusSchema = z.enum([
+  "on_track",
+  "cashflow_negative",
+  "debt_stalled",
+  "high_risk",
+]);
 export const analyticsDirectionSchema = z.enum(["improving", "flat", "worsening"]);
 
 export const analyticsPeriodSchema = z.object({
@@ -99,7 +116,14 @@ export const analyticsSummarySchema = z.object({
   cashflowSeries: z.array(cashflowSeriesPointSchema),
 });
 
-export const appViewSchema = z.enum(["today", "calendar", "ledger", "debts", "analytics", "settings"]);
+export const appViewSchema = z.enum([
+  "today",
+  "calendar",
+  "ledger",
+  "debts",
+  "analytics",
+  "settings",
+]);
 export const catchUpPromptModeSchema = z.enum(["always", "when_missed", "hidden"]);
 export const dailyReviewModeSchema = z.enum(["simple", "quick"]);
 export const themeModeSchema = z.enum(["system", "light", "dark"]);
@@ -149,44 +173,76 @@ export type ThemeMode = z.infer<typeof themeModeSchema>;
 export type OnboardingState = z.infer<typeof onboardingStateSchema>;
 export type UserSettings = z.infer<typeof userSettingsSchema>;
 
-export const entryInputSchema = entrySchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).superRefine((value, ctx) => {
-  if (value.amount <= 0) {
-    ctx.addIssue({ code: "custom", message: "Amount must be greater than zero.", path: ["amount"] });
-  }
+export const entryInputSchema = entrySchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .superRefine((value, ctx) => {
+    if (value.amount <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Amount must be greater than zero.",
+        path: ["amount"],
+      });
+    }
 
-  if (value.type === "debt_payment") {
-    if (!value.debtId) {
-      ctx.addIssue({ code: "custom", message: "Debt payment entries must be linked to a debt.", path: ["debtId"] });
+    if (value.type === "debt_payment") {
+      if (!value.debtId) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Debt payment entries must be linked to a debt.",
+          path: ["debtId"],
+        });
+      }
+    } else {
+      if (!value.categoryId) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Entries must include a category.",
+          path: ["categoryId"],
+        });
+      }
+      if (value.debtId) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Only debt payment entries may include a debt link.",
+          path: ["debtId"],
+        });
+      }
     }
-  } else {
-    if (!value.categoryId) {
-      ctx.addIssue({ code: "custom", message: "Entries must include a category.", path: ["categoryId"] });
-    }
-    if (value.debtId) {
-      ctx.addIssue({ code: "custom", message: "Only debt payment entries may include a debt link.", path: ["debtId"] });
-    }
-  }
-});
+  });
 
-export const debtInputSchema = debtSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).superRefine((value, ctx) => {
-  if (value.balanceCurrent < 0) {
-    ctx.addIssue({ code: "custom", message: "Balance cannot be negative.", path: ["balanceCurrent"] });
-  }
-  if (value.interestRate !== null && value.interestRate < 0) {
-    ctx.addIssue({ code: "custom", message: "Interest rate cannot be negative.", path: ["interestRate"] });
-  }
-  if (value.minimumPayment !== null && value.minimumPayment < 0) {
-    ctx.addIssue({ code: "custom", message: "Minimum payment cannot be negative.", path: ["minimumPayment"] });
-  }
-});
+export const debtInputSchema = debtSchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .superRefine((value, ctx) => {
+    if (value.balanceCurrent < 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Balance cannot be negative.",
+        path: ["balanceCurrent"],
+      });
+    }
+    if (value.interestRate !== null && value.interestRate < 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Interest rate cannot be negative.",
+        path: ["interestRate"],
+      });
+    }
+    if (value.minimumPayment !== null && value.minimumPayment < 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Minimum payment cannot be negative.",
+        path: ["minimumPayment"],
+      });
+    }
+  });
 
 export const checkInInputSchema = z.object({
   date: isoDateSchema,

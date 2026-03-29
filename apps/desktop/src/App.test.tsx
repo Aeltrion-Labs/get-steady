@@ -21,7 +21,8 @@ vi.mock("./lib/api", async () => {
   return {
     ...actual,
     bootstrapApp: (...args: Parameters<typeof actual.bootstrapApp>) => bootstrapAppMock(...args),
-    runAutomaticBackup: (...args: Parameters<typeof actual.runAutomaticBackup>) => runAutomaticBackupMock(...args),
+    runAutomaticBackup: (...args: Parameters<typeof actual.runAutomaticBackup>) =>
+      runAutomaticBackupMock(...args),
     restoreBackup: (...args: Parameters<typeof actual.restoreBackup>) => restoreBackupMock(...args),
     saveOnboarding: vi.fn(async () => undefined),
     saveSettings: vi.fn(async (input) => input),
@@ -61,7 +62,10 @@ function installMatchMedia(initialMatches: boolean): MatchMediaController {
   return {
     emit(nextMatches: boolean) {
       matches = nextMatches;
-      const event = { matches: nextMatches, media: "(prefers-color-scheme: dark)" } as MediaQueryListEvent;
+      const event = {
+        matches: nextMatches,
+        media: "(prefers-color-scheme: dark)",
+      } as MediaQueryListEvent;
       listeners.forEach((listener) => listener(event));
     },
   };

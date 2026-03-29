@@ -126,7 +126,7 @@ describe("CSV exporters", () => {
     ]);
 
     expect(entriesCsv.split("\n")[0]).toContain("Entry ID");
-    expect(entriesCsv).toContain("\"milk, eggs\"");
+    expect(entriesCsv).toContain('"milk, eggs"');
     expect(debtsCsv.split("\n")[0]).toContain("Current Balance");
     expect(debtsCsv).toContain("Visa");
   });

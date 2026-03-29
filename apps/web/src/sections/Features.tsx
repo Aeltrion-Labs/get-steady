@@ -56,7 +56,8 @@ export function Features() {
             What it does
           </p>
           <h2 className="font-display text-4xl leading-tight text-foreground md:text-5xl">
-            Built to help you steady spending,<br className="hidden lg:block" /> debt, and cashflow.
+            Built to help you steady spending,
+            <br className="hidden lg:block" /> debt, and cashflow.
           </h2>
         </div>
 

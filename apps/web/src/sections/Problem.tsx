@@ -13,13 +13,13 @@ export function Problem() {
           </div>
           <div className="space-y-6 text-muted-foreground">
             <p className="text-lg leading-relaxed">
-              When money awareness slips, spending habits usually go with it.
-              Automated tools make it easy to ignore the numbers entirely.
+              When money awareness slips, spending habits usually go with it. Automated tools make
+              it easy to ignore the numbers entirely.
             </p>
             <p className="text-lg leading-relaxed">
-              Get Steady takes a simpler approach: a short daily check-in that
-              keeps what came in, what went out, and what is going to debt
-              visible again — without turning it into a second job.
+              Get Steady takes a simpler approach: a short daily check-in that keeps what came in,
+              what went out, and what is going to debt visible again — without turning it into a
+              second job.
             </p>
           </div>
         </div>

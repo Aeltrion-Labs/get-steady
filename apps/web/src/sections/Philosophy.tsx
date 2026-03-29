@@ -11,14 +11,12 @@ export function Philosophy() {
               Manual entry is part of the point.
             </h2>
             <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              Get Steady is built on the idea that a little intentional friction
-              creates better awareness. Logging income, spending, and debt
-              payments helps make the numbers feel real — without turning them
-              into a giant budgeting project.
+              Get Steady is built on the idea that a little intentional friction creates better
+              awareness. Logging income, spending, and debt payments helps make the numbers feel
+              real — without turning them into a giant budgeting project.
             </p>
             <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              Manual entry is not a limitation here. It is how the habit starts
-              to stick.
+              Manual entry is not a limitation here. It is how the habit starts to stick.
             </p>
           </div>
         </div>

@@ -11,7 +11,15 @@ import {
 } from "@get-steady/core";
 import { save } from "@tauri-apps/plugin-dialog";
 import { openPath } from "@tauri-apps/plugin-opener";
-import { ArrowDownCircle, BookOpenText, CalendarDays, ChartColumnIncreasing, Dot, House, Settings2 } from "lucide-react";
+import {
+  ArrowDownCircle,
+  BookOpenText,
+  CalendarDays,
+  ChartColumnIncreasing,
+  Dot,
+  House,
+  Settings2,
+} from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { Badge } from "./components/ui/badge";
 import { Button } from "./components/ui/button";
@@ -54,32 +62,38 @@ const VIEW_META: Record<AppView, { eyebrow: string; title: string; description: 
   today: {
     eyebrow: "Daily habit",
     title: "Today stays at the center.",
-    description: "Log the money movement that matters, then close the loop before tomorrow asks for your attention.",
+    description:
+      "Log the money movement that matters, then close the loop before tomorrow asks for your attention.",
   },
   calendar: {
     eyebrow: "Recovery view",
     title: "Catch up without shame.",
-    description: "Use the month view to spot missed days quickly and move them back into the habit rhythm.",
+    description:
+      "Use the month view to spot missed days quickly and move them back into the habit rhythm.",
   },
   ledger: {
     eyebrow: "Entry history",
     title: "Look back without getting lost.",
-    description: "Review what came in, what went out, and what went to debt without turning the app into a full ledger.",
+    description:
+      "Review what came in, what went out, and what went to debt without turning the app into a full ledger.",
   },
   debts: {
     eyebrow: "Debt focus",
     title: "Keep debt visible.",
-    description: "Keep what you owe current enough to stay grounded and keep moving in the right direction.",
+    description:
+      "Keep what you owe current enough to stay grounded and keep moving in the right direction.",
   },
   analytics: {
     eyebrow: "Steady view",
     title: "See whether things are settling down.",
-    description: "Use the analytics view to judge whether spending, debt, and monthly margin are moving in a steadier direction.",
+    description:
+      "Use the analytics view to judge whether spending, debt, and monthly margin are moving in a steadier direction.",
   },
   settings: {
     eyebrow: "Control center",
     title: "Keep the app under your control.",
-    description: "Adjust reminders, exports, and local-first preferences without cluttering the daily workflow.",
+    description:
+      "Adjust reminders, exports, and local-first preferences without cluttering the daily workflow.",
   },
 };
 
@@ -100,7 +114,10 @@ function isAutomaticBackupDue(nextAutomaticBackupDueAt: string | null) {
 
 const MAX_TIMEOUT_MS = 2_147_483_647;
 
-function prioritizeSelectedCategories<T extends { id: string }>(items: T[], prioritizedIds: string[]) {
+function prioritizeSelectedCategories<T extends { id: string }>(
+  items: T[],
+  prioritizedIds: string[],
+) {
   if (prioritizedIds.length === 0) {
     return items;
   }
@@ -254,7 +271,7 @@ function AppInner() {
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const syncTheme = (event?: MediaQueryListEvent) => {
-      setSystemTheme(event?.matches ?? mediaQuery.matches ? "dark" : "light");
+      setSystemTheme((event?.matches ?? mediaQuery.matches) ? "dark" : "light");
     };
 
     syncTheme();
@@ -282,8 +299,6 @@ function AppInner() {
 
     const nextDueAt = bootstrapQuery.data.backupSummary.nextAutomaticBackupDueAt;
     const scheduleKey = nextDueAt ?? "immediate";
-    let timer: number | undefined;
-
     if (isAutomaticBackupDue(nextDueAt)) {
       if (lastScheduledBackupKey.current !== scheduleKey) {
         lastScheduledBackupKey.current = scheduleKey;
@@ -295,7 +310,7 @@ function AppInner() {
     lastScheduledBackupKey.current = scheduleKey;
     const dueAt = new Date(nextDueAt as string).getTime();
     const delay = Math.min(Math.max(dueAt - Date.now(), 1000), MAX_TIMEOUT_MS);
-    timer = window.setTimeout(() => {
+    const timer = window.setTimeout(() => {
       if (Date.now() >= dueAt) {
         void runAutomaticBackupMutation.mutateAsync();
         return;
@@ -327,8 +342,12 @@ function AppInner() {
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-xl rounded-[32px] border border-destructive/20 bg-card p-10 shadow-panel">
           <Badge>Error</Badge>
-          <h1 className="mt-4 font-display text-3xl text-foreground">The app could not finish booting.</h1>
-          <p className="mt-3 text-sm text-muted-foreground">{String(bootstrapQuery.error ?? "Unknown bootstrap failure.")}</p>
+          <h1 className="mt-4 font-display text-3xl text-foreground">
+            The app could not finish booting.
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {String(bootstrapQuery.error ?? "Unknown bootstrap failure.")}
+          </p>
           <Button className="mt-6" onClick={() => void bootstrapQuery.refetch()}>
             Retry bootstrap
           </Button>
@@ -404,9 +423,14 @@ function AppInner() {
   const showCatchUp =
     data.settings.catchUpPromptMode === "always" ||
     (data.settings.catchUpPromptMode === "when_missed" && missedDates.length > 0);
-  const todayCategories = prioritizeSelectedCategories(data.categories, data.onboarding.selectedCategoryIds);
+  const todayCategories = prioritizeSelectedCategories(
+    data.categories,
+    data.onboarding.selectedCategoryIds,
+  );
   const activeViewMeta = VIEW_META[currentView];
-  const topStatusLabel = reminderPlan.dailyCheckIn?.shouldSend ? "A reminder would help now" : "Calm local reminders";
+  const topStatusLabel = reminderPlan.dailyCheckIn?.shouldSend
+    ? "A reminder would help now"
+    : "Calm local reminders";
 
   async function chooseDestination(defaultPath: string) {
     const selected = await save({ defaultPath });
@@ -447,7 +471,7 @@ function AppInner() {
 
   return (
     <div className="app-shell min-h-screen p-4 md:p-6" data-theme={effectiveTheme}>
-        <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-[1480px] gap-6 lg:grid-cols-[300px,1fr]">
+      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-[1480px] gap-6 lg:grid-cols-[300px,1fr]">
         <aside className="flex flex-col rounded-[36px] border border-border bg-card/90 p-6 shadow-panel">
           <div className="flex items-center justify-between px-1">
             <span className="font-display text-lg text-foreground">Get Steady</span>
@@ -484,24 +508,41 @@ function AppInner() {
             <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">This month</p>
             <div className="mt-3">
               <p className="text-xs text-muted-foreground">Net margin</p>
-              <p className={cn("mt-1 text-2xl font-semibold tabular-nums", summary.monthNetMargin >= 0 ? "text-success" : "text-destructive")}>
+              <p
+                className={cn(
+                  "mt-1 text-2xl font-semibold tabular-nums",
+                  summary.monthNetMargin >= 0 ? "text-success" : "text-destructive",
+                )}
+              >
                 {formatCurrency(summary.monthNetMargin)}
               </p>
             </div>
           </div>
 
           <div className="mt-3 rounded-[28px] border border-border/80 bg-muted/45 p-4">
-            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Current posture</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+              Current posture
+            </p>
             <div className="mt-3 space-y-2">
               <div className="flex items-center justify-between rounded-[20px] bg-card/75 px-3 py-2.5">
                 <span className="text-sm text-muted-foreground">Missed days</span>
-                <span className={cn("font-semibold tabular-nums", missedDates.length > 0 ? "text-warning" : "text-success")}>
+                <span
+                  className={cn(
+                    "font-semibold tabular-nums",
+                    missedDates.length > 0 ? "text-warning" : "text-success",
+                  )}
+                >
                   {missedDates.length}
                 </span>
               </div>
               <div className="flex items-center justify-between rounded-[20px] bg-card/75 px-3 py-2.5">
                 <span className="text-sm text-muted-foreground">Debt outstanding</span>
-                <span className={cn("font-semibold tabular-nums", summary.debtOutstanding > 0 ? "text-chart-debt-outstanding" : "text-success")}>
+                <span
+                  className={cn(
+                    "font-semibold tabular-nums",
+                    summary.debtOutstanding > 0 ? "text-chart-debt-outstanding" : "text-success",
+                  )}
+                >
                   {formatCurrency(summary.debtOutstanding)}
                 </span>
               </div>
@@ -510,7 +551,9 @@ function AppInner() {
 
           <div className="mt-auto pt-6">
             <div className="rounded-[24px] border border-border/80 bg-accent/45 px-4 py-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-primary/80">{topStatusLabel}</p>
+              <p className="text-xs uppercase tracking-[0.16em] text-primary/80">
+                {topStatusLabel}
+              </p>
               <p className="mt-2 text-sm leading-6 text-foreground">
                 {reminderPlan.dailyCheckIn?.shouldSend
                   ? "If you were relying on reminders, today would be a good moment for one."
@@ -524,9 +567,15 @@ function AppInner() {
           <div className="rounded-[30px] border border-border bg-card/85 px-5 py-4 shadow-panel">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{activeViewMeta.eyebrow}</p>
-                <h2 className="mt-2 font-display text-3xl text-foreground">{activeViewMeta.title}</h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{activeViewMeta.description}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  {activeViewMeta.eyebrow}
+                </p>
+                <h2 className="mt-2 font-display text-3xl text-foreground">
+                  {activeViewMeta.title}
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                  {activeViewMeta.description}
+                </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[560px] xl:grid-cols-4">
                 <div className="rounded-[22px] border border-border/80 bg-card/80 px-4 py-3">
@@ -534,12 +583,20 @@ function AppInner() {
                   <p className="mt-2 text-sm font-semibold text-foreground">{today}</p>
                 </div>
                 <div className="rounded-[22px] border border-border/80 bg-card/80 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Check-in</p>
-                  <p className="mt-2 text-sm font-semibold text-foreground">{summary.isTodayCheckedIn ? "Closed out" : "Open"}</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                    Check-in
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-foreground">
+                    {summary.isTodayCheckedIn ? "Closed out" : "Open"}
+                  </p>
                 </div>
                 <div className="rounded-[22px] border border-border/80 bg-card/80 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Reminder time</p>
-                  <p className="mt-2 text-sm font-semibold text-foreground">{data.settings.reminderTime}</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                    Reminder time
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-foreground">
+                    {data.settings.reminderTime}
+                  </p>
                 </div>
                 <div className="rounded-[22px] border border-border/80 bg-card/80 px-4 py-3">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Theme</p>
@@ -565,10 +622,18 @@ function AppInner() {
               }}
               onSelectEntryDate={(date) => setSelectedEntryDate(date)}
               onMarkTodayComplete={async () => {
-                await markCheckInMutation.mutateAsync({ date: today, isPartial: false, note: null });
+                await markCheckInMutation.mutateAsync({
+                  date: today,
+                  isPartial: false,
+                  note: null,
+                });
               }}
               onMarkDatePartial={async (date) => {
-                await markCheckInMutation.mutateAsync({ date, isPartial: true, note: "Catch-up partial." });
+                await markCheckInMutation.mutateAsync({
+                  date,
+                  isPartial: true,
+                  note: "Catch-up partial.",
+                });
               }}
             />
           ) : null}
@@ -589,7 +654,11 @@ function AppInner() {
                 setCurrentView("today");
               }}
               onMarkPartial={async (date) => {
-                await markCheckInMutation.mutateAsync({ date, isPartial: true, note: "Catch-up partial." });
+                await markCheckInMutation.mutateAsync({
+                  date,
+                  isPartial: true,
+                  note: "Catch-up partial.",
+                });
               }}
             />
           ) : null}

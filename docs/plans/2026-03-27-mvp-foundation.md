@@ -13,6 +13,7 @@
 ### Task 1: Workspace Foundation
 
 **Files:**
+
 - Create: `package.json`
 - Create: `pnpm-workspace.yaml`
 - Create: `tsconfig.base.json`
@@ -41,6 +42,7 @@ Expected: pass with the basic shared export available.
 ### Task 2: Core Schemas and Domain Rules
 
 **Files:**
+
 - Create: `packages/core/src/schema.ts`
 - Create: `packages/core/src/summary.ts`
 - Create: `packages/core/src/checkins.ts`
@@ -49,6 +51,7 @@ Expected: pass with the basic shared export available.
 **Step 1: Write the failing tests**
 
 Add tests for:
+
 - monthly summary totals
 - missed-day detection
 - check-in completion state
@@ -68,6 +71,7 @@ Run: `pnpm --filter @get-steady/core test`
 ### Task 3: SQLite Bootstrap and Repositories
 
 **Files:**
+
 - Create: `apps/desktop/src-tauri/src/db/*`
 - Create: `apps/desktop/src-tauri/src/repositories/*`
 - Create: `apps/desktop/src-tauri/src/commands/*`
@@ -91,6 +95,7 @@ Run: `cargo test`
 ### Task 4: Tauri Command Surface
 
 **Files:**
+
 - Modify: `apps/desktop/src-tauri/src/lib.rs`
 - Create: `apps/desktop/src/lib/api.ts`
 - Create: `apps/desktop/src/lib/query-client.ts`
@@ -106,6 +111,7 @@ Run: `pnpm --filter desktop test`
 **Step 3: Write minimal implementation**
 
 Add command handlers and frontend invoke wrappers for:
+
 - bootstrap payload
 - entries CRUD
 - debts CRUD
@@ -122,6 +128,7 @@ Run: `pnpm --filter desktop test`
 ### Task 5: Today and Catch-Up UI
 
 **Files:**
+
 - Create: `apps/desktop/src/features/today/*`
 - Modify: `apps/desktop/src/App.tsx`
 - Test: `apps/desktop/src/features/today/*.test.tsx`
@@ -145,6 +152,7 @@ Run: `pnpm --filter desktop test`
 ### Task 6: Ledger and Debts UI
 
 **Files:**
+
 - Create: `apps/desktop/src/features/ledger/*`
 - Create: `apps/desktop/src/features/debts/*`
 - Test: `apps/desktop/src/features/ledger/*.test.tsx`
@@ -153,6 +161,7 @@ Run: `pnpm --filter desktop test`
 **Step 1: Write the failing tests**
 
 Add tests for:
+
 - ledger filters
 - entry form editing
 - debt summary rendering
@@ -173,6 +182,7 @@ Run: `pnpm --filter desktop test`
 ### Task 7: Settings, Export, Backup, and Docs
 
 **Files:**
+
 - Create: `apps/desktop/src/features/settings/*`
 - Modify: `README.md`
 - Create: `IMPLEMENTATION_NOTES.md`
@@ -196,11 +206,13 @@ Run: `pnpm --filter desktop test`
 ### Task 8: End-to-End Verification
 
 **Files:**
+
 - Modify: as needed based on failures
 
 **Step 1: Run full verification**
 
 Run:
+
 - `pnpm test`
 - `pnpm --filter desktop build`
 - `cargo test`

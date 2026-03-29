@@ -49,7 +49,10 @@ function finalizePeriod(period: AnalyticsPeriod): AnalyticsPeriod {
   };
 }
 
-function calculateDebtFreeMonths(debtOutstanding: number, monthlyPayments: number[]): number | null {
+function calculateDebtFreeMonths(
+  debtOutstanding: number,
+  monthlyPayments: number[],
+): number | null {
   if (debtOutstanding <= 0) {
     return null;
   }
@@ -94,13 +97,14 @@ function getMissionStatus(input: {
   return "on_track";
 }
 
-function buildMessages(status: MissionStatus, direction: AnalyticsDirection): Pick<
-  AnalyticsSummary,
-  "primaryMessage" | "secondaryMessage" | "focusItems"
-> {
+function buildMessages(
+  status: MissionStatus,
+  direction: AnalyticsDirection,
+): Pick<AnalyticsSummary, "primaryMessage" | "secondaryMessage" | "focusItems"> {
   if (status === "cashflow_negative") {
     return {
-      primaryMessage: "Cashflow is negative this month, even though debt payments are still happening.",
+      primaryMessage:
+        "Cashflow is negative this month, even though debt payments are still happening.",
       secondaryMessage:
         direction === "worsening"
           ? "Debt payoff is still moving, but monthly breathing room has tightened."
@@ -166,7 +170,12 @@ export function calculateAnalyticsSummary(input: {
 
   for (const entry of entries) {
     const monthKey = entry.entryDate.slice(0, 7);
-    const target = monthKey === currentMonthKey ? currentMonth : monthKey === previousMonthKey ? previousMonth : null;
+    const target =
+      monthKey === currentMonthKey
+        ? currentMonth
+        : monthKey === previousMonthKey
+          ? previousMonth
+          : null;
 
     if (!target) {
       continue;
@@ -188,7 +197,9 @@ export function calculateAnalyticsSummary(input: {
   const debtOutstanding = normalizeMoney(
     debts.filter((debt) => debt.isActive).reduce((total, debt) => total + debt.balanceCurrent, 0),
   );
-  const debtPaymentChange = normalizeMoney(finalizedCurrent.debtPayments - finalizedPrevious.debtPayments);
+  const debtPaymentChange = normalizeMoney(
+    finalizedCurrent.debtPayments - finalizedPrevious.debtPayments,
+  );
   const netMarginChange = normalizeMoney(finalizedCurrent.netMargin - finalizedPrevious.netMargin);
   const cashflowDirection = getCashflowDirection(netMarginChange);
   const missionStatus = getMissionStatus({
@@ -197,9 +208,14 @@ export function calculateAnalyticsSummary(input: {
     currentDebtPayments: finalizedCurrent.debtPayments,
     previousDebtPayments: finalizedPrevious.debtPayments,
   });
-  const { primaryMessage, secondaryMessage, focusItems } = buildMessages(missionStatus, cashflowDirection);
+  const { primaryMessage, secondaryMessage, focusItems } = buildMessages(
+    missionStatus,
+    cashflowDirection,
+  );
   const missedDates = getMissedCheckInDates(checkIns, input.today);
-  const isTodayCheckedIn = checkIns.some((checkIn) => checkIn.date === input.today && (checkIn.completed || checkIn.isPartial));
+  const isTodayCheckedIn = checkIns.some(
+    (checkIn) => checkIn.date === input.today && (checkIn.completed || checkIn.isPartial),
+  );
   const hasDataConfidenceWarning = missedDates.length > 0 || !isTodayCheckedIn;
   const confidenceMessage = hasDataConfidenceWarning
     ? "Recent check-in gaps mean this mission read may be missing a day or two."

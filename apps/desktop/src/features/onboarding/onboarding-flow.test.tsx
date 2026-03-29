@@ -22,7 +22,9 @@ describe("OnboardingFlow", () => {
     expect(screen.getByText("Skip for now")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Start setup"));
-    fireEvent.change(screen.getByLabelText("Preferred daily check-in time"), { target: { value: "19:00" } });
+    fireEvent.change(screen.getByLabelText("Preferred daily check-in time"), {
+      target: { value: "19:00" },
+    });
     fireEvent.click(screen.getByText("Continue"));
     fireEvent.click(screen.getByLabelText("Groceries"));
     fireEvent.click(screen.getByText("Continue"));

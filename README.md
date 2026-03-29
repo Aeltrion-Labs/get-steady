@@ -1,111 +1,166 @@
 # Get Steady
 
-Get Steady is a local-first desktop app for building a daily money habit through manual tracking, debt balance visibility, and simple daily check-ins.
+Get Steady is a local-first desktop app for building a steady daily money habit through
+manual tracking, debt visibility, and simple check-ins.
 
-## Stack
+The product is intentionally narrow:
+
+- manual by design
+- local by default
+- focused on awareness, not bank sync
+- built to help users recover quickly after missed days
+
+## Current Status
+
+This repository contains the MVP desktop application and shared business logic for the
+first public open-source release. The desktop app is usable locally today, but the project
+is still early and some release-engineering work is intentionally deferred.
+
+Implemented today:
+
+- Tauri desktop shell with React and TypeScript UI
+- local SQLite storage with migration bootstrap
+- daily check-ins, entry tracking, debt tracking, cashflow summaries, analytics, and backups
+- CSV export and local database backup flows
+- shared validation and summary logic in `@get-steady/core`
+- public marketing site in `apps/web`
+
+Not in this launch:
+
+- bank sync
+- cloud accounts or sync
+- mobile apps
+- auto-update infrastructure
+- signed or notarized desktop release automation
+
+## Why This Exists
+
+Most finance software optimizes for automation, aggregation, or endless dashboards.
+Get Steady takes a calmer approach: a short manual routine that keeps money in, money out,
+and debt progress visible without turning financial awareness into a second job.
+
+## Privacy and Data Ownership
+
+- Data stays on the local device.
+- No account is required.
+- The app works offline.
+- Users can export entries and debt data to CSV.
+- Database backups are created locally by the desktop app.
+
+The SQLite database is created under the Tauri app data directory:
+
+```text
+<app-data>/data/steady.sqlite
+```
+
+Default subdirectories:
+
+```text
+<app-data>/backups/
+<app-data>/exports/
+```
+
+Typical app data roots:
+
+- Windows: `%APPDATA%` or `%LOCALAPPDATA%` under the Tauri app identifier path
+- macOS: `~/Library/Application Support/`
+- Linux: `~/.local/share/`
+
+## Workspace Layout
+
+- `apps/desktop`: Tauri desktop app, React UI, native SQLite command layer
+- `apps/web`: marketing site and GitHub Pages deployment surface
+- `packages/core`: shared schemas, date helpers, exports, summaries, and analytics logic
+- `packages/ui`: shared UI package placeholder
+- `docs`: product, tech, and planning notes
+
+## Tech Stack
 
 - Tauri 2
 - React 19
 - TypeScript
 - Vite
 - Tailwind CSS
-- SQLite via Rust + `rusqlite`
+- SQLite via Rust and `rusqlite`
 - Zod
 - TanStack Query
 - Vitest
 
-## Workspace Layout
+## Requirements
 
-- `apps/desktop`: Tauri desktop app, React UI, native SQLite command layer
-- `packages/core`: shared schemas, summary math, catch-up logic, CSV shaping helpers
-- `packages/ui`: placeholder for reusable UI primitives
-- `docs/plans`: approved design and implementation notes for this MVP pass
+- Node.js 22+
+- pnpm 10+
+- Rust stable toolchain
 
-## What Is Implemented
+## Quickstart
 
-- runnable Tauri desktop shell
-- React + TypeScript UI with a calm single-window layout
-- local SQLite database stored in the app data directory
-- schema migration bootstrap and default category seeding
-- categories, entries, debts, and check-ins data model
-- Today screen with quick add, daily/monthly summaries, debt outstanding, and catch-up prompt
-- Ledger screen with add/edit/delete and basic filters
-- Debts screen with create/edit/delete and payment recording
-- Settings screen with data path visibility, CSV export, and database backup
-- CSV export for entries and debts
-- SQLite backup to a user-chosen file path
-
-## Intentionally Deferred
-
-- XLSX export
-- restore/import UI
-- reminder notifications
-- recurring templates
-- trends/analytics screen
-- CLI, local API, and MCP runtime
-- payoff simulations beyond current balance + recorded payments
-
-## How To Run
-
-1. Install dependencies:
+Install dependencies:
 
 ```bash
 pnpm install
 ```
 
-2. Start the desktop app in development:
+Start the desktop app in development:
 
 ```bash
 pnpm --filter @get-steady/desktop tauri dev
 ```
 
-3. Run tests:
+Start the marketing site in development:
 
 ```bash
+pnpm --filter @get-steady/web dev
+```
+
+Run the standard checks:
+
+```bash
+pnpm check
+```
+
+Run individual commands:
+
+```bash
+pnpm typecheck
+pnpm lint
 pnpm test
-cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
+pnpm build
+pnpm test:rust
 ```
 
-4. Build the frontend bundle:
+Format the repository:
 
 ```bash
-pnpm --filter @get-steady/desktop build
+pnpm format
 ```
 
-## Local Data Storage
+## Quality Gates
 
-The SQLite database is created automatically in the Tauri app data directory under:
+The public launch baseline includes:
 
-```text
-<app-data>/data/steady.sqlite
-```
-
-Backups default to:
-
-```text
-<app-data>/backups/
-```
-
-Exports default to:
-
-```text
-<app-data>/exports/
-```
-
-The exact database path is shown in the Settings screen at runtime.
-
-Typical platform-specific app data roots:
-
-- Windows: `%APPDATA%` or `%LOCALAPPDATA%` under the Tauri app identifier path
-- macOS: `~/Library/Application Support/`
-- Linux: `~/.local/share/`
+- workspace typechecking
+- ESLint for TypeScript and React code
+- Prettier for repository formatting
+- Vitest for frontend and shared logic tests
+- Rust tests for the Tauri backend
+- GitHub Actions CI, security, and CodeQL workflows
+- Dependabot for npm, Cargo, and GitHub Actions updates
 
 ## Notes
 
 - Debt payments are stored as normal entries linked to a debt and update the debt balance transactionally.
-- The UI computes daily/monthly summaries and catch-up state from the shared `@get-steady/core` package.
+- The UI computes daily and monthly summaries, catch-up state, and analytics from `@get-steady/core`.
 - Export uses friendly CSV headers. XLSX is not included in this pass.
+
+## Contributing
+
+Contributions are welcome, but the project is still tightening its public API and product
+scope. Start with [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
+## Security
+
+Please read [SECURITY.md](SECURITY.md) before reporting vulnerabilities.
 
 ## License
 
-This project is licensed under the MIT License. See `LICENSE` for the full text.
+This project is released under the [MIT License](LICENSE).

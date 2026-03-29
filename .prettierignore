@@ -2,8 +2,8 @@ node_modules/
 .worktrees/
 coverage/
 apps/desktop/dist/
+apps/desktop/src-tauri/gen/schemas/
 apps/desktop/src-tauri/target/
 apps/web/dist/
-docs
-dist/
-.DS_Store
+pnpm-lock.yaml
+apps/desktop/src-tauri/Cargo.lock

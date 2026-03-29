@@ -91,7 +91,7 @@ body {
 
 .app-shell[data-theme="dark"] {
   background:
-    radial-gradient(circle at top left, hsl(187 28% 12% / 0.70), transparent 32%),
+    radial-gradient(circle at top left, hsl(187 28% 12% / 0.7), transparent 32%),
     hsl(var(--background));
 }
 

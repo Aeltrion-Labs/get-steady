@@ -4,17 +4,20 @@ const pillars = [
   {
     icon: Shield,
     title: "No required account",
-    description: "The app works without creating an account, signing up for a service, or handing over your financial data.",
+    description:
+      "The app works without creating an account, signing up for a service, or handing over your financial data.",
   },
   {
     icon: WifiOff,
     title: "Works offline",
-    description: "Everything runs locally. There is no cloud dependency, no sync service, and no outage that affects your data.",
+    description:
+      "Everything runs locally. There is no cloud dependency, no sync service, and no outage that affects your data.",
   },
   {
     icon: Download,
     title: "Export whenever you want",
-    description: "Your entries and debt records export to CSV at any time. Your data is yours to move, archive, or delete.",
+    description:
+      "Your entries and debt records export to CSV at any time. Your data is yours to move, archive, or delete.",
   },
 ];
 
@@ -31,9 +34,9 @@ export function Privacy() {
               Your data stays with you.
             </h2>
             <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-              The app stores data locally and is designed for portability from
-              the start. No required cloud account. No lock-in. No need to hand
-              over your financial life just to build a steadier routine.
+              The app stores data locally and is designed for portability from the start. No
+              required cloud account. No lock-in. No need to hand over your financial life just to
+              build a steadier routine.
             </p>
           </div>
 

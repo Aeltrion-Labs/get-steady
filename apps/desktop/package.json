@@ -2,6 +2,8 @@
   "name": "@get-steady/desktop",
   "private": true,
   "version": "0.1.0",
+  "description": "Tauri desktop client for the Get Steady local-first money habit tracker.",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +11,9 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "test": "vitest run",
-    "lint": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . --ext .ts,.tsx,.mts,.cts",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@get-steady/core": "workspace:*",

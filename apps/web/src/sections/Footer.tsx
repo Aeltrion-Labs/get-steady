@@ -16,7 +16,12 @@ export function Footer() {
             <Github className="h-4 w-4" />
             GitHub
           </a>
-          <a href={LICENSE_PATH} target="_blank" rel="noopener noreferrer" className="transition hover:text-foreground">
+          <a
+            href={LICENSE_PATH}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition hover:text-foreground"
+          >
             MIT License
           </a>
         </div>

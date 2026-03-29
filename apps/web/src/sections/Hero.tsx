@@ -17,12 +17,13 @@ export function Hero() {
         </p>
 
         <h1 className="font-display text-5xl leading-[1.1] text-foreground md:text-6xl lg:text-7xl">
-          Get steady with<br className="hidden sm:block" /> your money.
+          Get steady with
+          <br className="hidden sm:block" /> your money.
         </h1>
 
         <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
-          A free, open source desktop app for tracking money in, money out, and
-          debt through a simple daily check-in.
+          A free, open source desktop app for tracking money in, money out, and debt through a
+          simple daily check-in.
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -45,9 +46,13 @@ export function Hero() {
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
           <span>Free and open source</span>
-          <span aria-hidden="true" className="hidden sm:inline">·</span>
+          <span aria-hidden="true" className="hidden sm:inline">
+            ·
+          </span>
           <span>No required account</span>
-          <span aria-hidden="true" className="hidden sm:inline">·</span>
+          <span aria-hidden="true" className="hidden sm:inline">
+            ·
+          </span>
           <span>Your data, your device</span>
         </div>
 

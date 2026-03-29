@@ -12,7 +12,9 @@ export function buildCheckInRecord(input: {
   return {
     date: input.date,
     completed,
-    completedAt: completed ? input.completedAt ?? new Date(`${input.date}T23:59:59Z`).toISOString() : null,
+    completedAt: completed
+      ? (input.completedAt ?? new Date(`${input.date}T23:59:59Z`).toISOString())
+      : null,
     isPartial: input.isPartial ?? false,
     note: input.note ?? null,
   };

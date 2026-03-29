@@ -1,7 +1,7 @@
 use crate::models::{
-    BackupRecord, BackupSummaryRecord, BootstrapPayload, CategoryRecord, CheckInInput, CheckInRecord, DebtInput,
-    DebtPaymentInput, DebtRecord, EntryFilters, EntryInput, EntryRecord, OnboardingInput, OnboardingStateRecord,
-    UserSettingsInput, UserSettingsRecord,
+    BackupRecord, BackupSummaryRecord, BootstrapPayload, CategoryRecord, CheckInInput,
+    CheckInRecord, DebtInput, DebtPaymentInput, DebtRecord, EntryFilters, EntryInput, EntryRecord,
+    OnboardingInput, OnboardingStateRecord, UserSettingsInput, UserSettingsRecord,
 };
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension, ToSql};
 use std::collections::HashSet;
@@ -32,10 +32,13 @@ pub fn open_connection(app: &AppHandle) -> Result<(Connection, AppPaths), String
     let db_path = data_dir.join("steady.sqlite");
 
     fs::create_dir_all(&data_dir).map_err(|error| format!("failed to create data dir: {error}"))?;
-    fs::create_dir_all(&backup_dir).map_err(|error| format!("failed to create backup dir: {error}"))?;
-    fs::create_dir_all(&export_dir).map_err(|error| format!("failed to create export dir: {error}"))?;
+    fs::create_dir_all(&backup_dir)
+        .map_err(|error| format!("failed to create backup dir: {error}"))?;
+    fs::create_dir_all(&export_dir)
+        .map_err(|error| format!("failed to create export dir: {error}"))?;
 
-    let connection = Connection::open(&db_path).map_err(|error| format!("failed to open database: {error}"))?;
+    let connection =
+        Connection::open(&db_path).map_err(|error| format!("failed to open database: {error}"))?;
     connection
         .pragma_update(None, "foreign_keys", true)
         .map_err(|error| format!("failed to enable foreign keys: {error}"))?;
@@ -153,11 +156,23 @@ fn validate_entry_input(input: &EntryInput) -> Result<(), String> {
     }
 
     if input.entry_type == "debt_payment" {
-        if input.debt_id.as_deref().map(str::trim).unwrap_or("").is_empty() {
+        if input
+            .debt_id
+            .as_deref()
+            .map(str::trim)
+            .unwrap_or("")
+            .is_empty()
+        {
             return Err("Debt payment entries must be linked to a debt.".to_string());
         }
     } else {
-        if input.category_id.as_deref().map(str::trim).unwrap_or("").is_empty() {
+        if input
+            .category_id
+            .as_deref()
+            .map(str::trim)
+            .unwrap_or("")
+            .is_empty()
+        {
             return Err("Entries must include a category.".to_string());
         }
         if input.debt_id.is_some() {
@@ -187,7 +202,10 @@ fn validate_debt_input(input: &DebtInput) -> Result<(), String> {
     {
         return Err("Minimum payment cannot be negative.".to_string());
     }
-    if input.due_day.is_some_and(|value| !(1..=31).contains(&value)) {
+    if input
+        .due_day
+        .is_some_and(|value| !(1..=31).contains(&value))
+    {
         return Err("Due day must be between 1 and 31.".to_string());
     }
 
@@ -244,7 +262,11 @@ fn validate_user_settings_input(input: &UserSettingsInput) -> Result<(), String>
     if !is_valid_hhmm_time(&input.quiet_hours_end) {
         return Err("Quiet-hours end must use HH:MM format.".to_string());
     }
-    if input.reminder_days.iter().any(|value| !(0..=6).contains(value)) {
+    if input
+        .reminder_days
+        .iter()
+        .any(|value| !(0..=6).contains(value))
+    {
         return Err("Reminder days must stay between 0 and 6.".to_string());
     }
 
@@ -496,7 +518,8 @@ fn table_has_column(connection: &Connection, table: &str, column: &str) -> Resul
         .map_err(|error| format!("failed to query table info for {table}: {error}"))?;
 
     for row in rows {
-        if row.map_err(|error| format!("failed to read table info for {table}: {error}"))? == column {
+        if row.map_err(|error| format!("failed to read table info for {table}: {error}"))? == column
+        {
             return Ok(true);
         }
     }
@@ -531,9 +554,13 @@ fn repair_legacy_money_columns(connection: &Connection) -> Result<(), String> {
             );
             ",
         )
-        .map_err(|error| format!("failed to ensure user settings table during legacy repair: {error}"))?;
+        .map_err(|error| {
+            format!("failed to ensure user settings table during legacy repair: {error}")
+        })?;
 
-    if table_has_column(connection, "entries", "amount_cents")? && !table_has_column(connection, "entries", "amount")? {
+    if table_has_column(connection, "entries", "amount_cents")?
+        && !table_has_column(connection, "entries", "amount")?
+    {
         connection
             .execute_batch(
                 "
@@ -546,7 +573,9 @@ fn repair_legacy_money_columns(connection: &Connection) -> Result<(), String> {
             .map_err(|error| format!("failed to migrate entry amounts: {error}"))?;
     }
 
-    if table_has_column(connection, "debts", "starting_balance_cents")? && !table_has_column(connection, "debts", "balance_current")? {
+    if table_has_column(connection, "debts", "starting_balance_cents")?
+        && !table_has_column(connection, "debts", "balance_current")?
+    {
         connection
             .execute_batch(
                 "
@@ -572,7 +601,9 @@ fn repair_legacy_money_columns(connection: &Connection) -> Result<(), String> {
             .map_err(|error| format!("failed to migrate debt balances: {error}"))?;
     }
 
-    if table_has_column(connection, "debts", "interest_rate_bps")? && !table_has_column(connection, "debts", "interest_rate")? {
+    if table_has_column(connection, "debts", "interest_rate_bps")?
+        && !table_has_column(connection, "debts", "interest_rate")?
+    {
         connection
             .execute_batch(
                 "
@@ -585,7 +616,9 @@ fn repair_legacy_money_columns(connection: &Connection) -> Result<(), String> {
             .map_err(|error| format!("failed to migrate debt interest rates: {error}"))?;
     }
 
-    if table_has_column(connection, "debts", "minimum_payment_cents")? && !table_has_column(connection, "debts", "minimum_payment")? {
+    if table_has_column(connection, "debts", "minimum_payment_cents")?
+        && !table_has_column(connection, "debts", "minimum_payment")?
+    {
         connection
             .execute_batch(
                 "
@@ -766,7 +799,10 @@ fn list_categories(connection: &Connection) -> Result<Vec<CategoryRecord>, Strin
         .map_err(|error| format!("failed to map categories: {error}"))
 }
 
-pub fn list_entries(connection: &Connection, filters: Option<EntryFilters>) -> Result<Vec<EntryRecord>, String> {
+pub fn list_entries(
+    connection: &Connection,
+    filters: Option<EntryFilters>,
+) -> Result<Vec<EntryRecord>, String> {
     let mut sql = String::from(
         "SELECT id, type, amount, category_id, debt_id, note, entry_date, created_at, updated_at, source, is_estimated FROM entries",
     );
@@ -889,7 +925,8 @@ fn validate_backup_file(path: &Path) -> Result<(), String> {
         return Err("Backup file does not exist.".to_string());
     }
 
-    let connection = Connection::open(path).map_err(|error| format!("failed to open backup file: {error}"))?;
+    let connection =
+        Connection::open(path).map_err(|error| format!("failed to open backup file: {error}"))?;
     let result: String = connection
         .query_row("PRAGMA integrity_check(1)", [], |row| row.get(0))
         .map_err(|error| format!("failed to run backup integrity check: {error}"))?;
@@ -902,8 +939,9 @@ fn validate_backup_file(path: &Path) -> Result<(), String> {
 }
 
 fn build_backup_filename(kind: &str, created_at: &str) -> Result<String, String> {
-    let timestamp = OffsetDateTime::parse(created_at, &time::format_description::well_known::Rfc3339)
-        .map_err(|error| format!("failed to parse backup timestamp: {error}"))?;
+    let timestamp =
+        OffsetDateTime::parse(created_at, &time::format_description::well_known::Rfc3339)
+            .map_err(|error| format!("failed to parse backup timestamp: {error}"))?;
     Ok(format!(
         "steady-{kind}-{:04}{:02}{:02}-{:02}{:02}{:02}.sqlite",
         timestamp.year(),
@@ -925,10 +963,12 @@ fn create_backup_for_connection(
     let file_name = build_backup_filename(kind, &created_at)?;
     let file_path = backup_dir.join(&file_name);
     let backup_id = Uuid::new_v4().to_string();
-    fs::create_dir_all(backup_dir).map_err(|error| format!("failed to prepare backup directory: {error}"))?;
+    fs::create_dir_all(backup_dir)
+        .map_err(|error| format!("failed to prepare backup directory: {error}"))?;
 
     if file_path.exists() {
-        fs::remove_file(&file_path).map_err(|error| format!("failed to replace existing backup file: {error}"))?;
+        fs::remove_file(&file_path)
+            .map_err(|error| format!("failed to replace existing backup file: {error}"))?;
     }
 
     let result = connection.execute("VACUUM INTO ?1", params![file_path.display().to_string()]);
@@ -1004,7 +1044,9 @@ fn backup_record_for_retention(id: &str, created_at: &str) -> BackupRecord {
     }
 }
 
-fn select_automatic_backup_ids_to_keep(records: &[BackupRecord]) -> Result<HashSet<String>, String> {
+fn select_automatic_backup_ids_to_keep(
+    records: &[BackupRecord],
+) -> Result<HashSet<String>, String> {
     let mut sorted = records
         .iter()
         .filter(|record| record.kind == "auto" && record.status == "success")
@@ -1017,10 +1059,22 @@ fn select_automatic_backup_ids_to_keep(records: &[BackupRecord]) -> Result<HashS
     let mut monthly = HashSet::new();
 
     for record in sorted {
-        let timestamp = OffsetDateTime::parse(&record.created_at, &time::format_description::well_known::Rfc3339)
-            .map_err(|error| format!("failed to parse backup timestamp: {error}"))?;
-        let daily_key = format!("{:04}-{:02}-{:02}", timestamp.year(), u8::from(timestamp.month()), timestamp.day());
-        let weekly_key = format!("{:04}-W{:02}", timestamp.to_iso_week_date().0, timestamp.to_iso_week_date().1);
+        let timestamp = OffsetDateTime::parse(
+            &record.created_at,
+            &time::format_description::well_known::Rfc3339,
+        )
+        .map_err(|error| format!("failed to parse backup timestamp: {error}"))?;
+        let daily_key = format!(
+            "{:04}-{:02}-{:02}",
+            timestamp.year(),
+            u8::from(timestamp.month()),
+            timestamp.day()
+        );
+        let weekly_key = format!(
+            "{:04}-W{:02}",
+            timestamp.to_iso_week_date().0,
+            timestamp.to_iso_week_date().1
+        );
         let monthly_key = format!("{:04}-{:02}", timestamp.year(), u8::from(timestamp.month()));
 
         let mut should_keep = false;
@@ -1046,28 +1100,41 @@ fn prune_automatic_backups(connection: &Connection) -> Result<(), String> {
     let records = list_backup_records(connection)?;
     let keep_ids = select_automatic_backup_ids_to_keep(&records)?;
 
-    for record in records
-        .iter()
-        .filter(|record| record.kind == "auto" && record.status == "success" && !keep_ids.contains(&record.id))
-    {
+    for record in records.iter().filter(|record| {
+        record.kind == "auto" && record.status == "success" && !keep_ids.contains(&record.id)
+    }) {
         let path = Path::new(&record.file_path);
         if path.exists() {
-            fs::remove_file(path).map_err(|error| format!("failed to prune backup file: {error}"))?;
+            fs::remove_file(path)
+                .map_err(|error| format!("failed to prune backup file: {error}"))?;
         }
         connection
-            .execute("DELETE FROM backup_records WHERE id = ?1", params![record.id])
+            .execute(
+                "DELETE FROM backup_records WHERE id = ?1",
+                params![record.id],
+            )
             .map_err(|error| format!("failed to prune backup record: {error}"))?;
     }
 
     Ok(())
 }
 
-fn restore_backup_from_file(live_db_path: &Path, backup_path: &Path, backup_dir: &Path) -> Result<(), String> {
+fn restore_backup_from_file(
+    live_db_path: &Path,
+    backup_path: &Path,
+    backup_dir: &Path,
+) -> Result<(), String> {
     validate_backup_file(backup_path)?;
 
     let pre_restore_record = if live_db_path.exists() {
-        let mut live_connection = Connection::open(live_db_path).map_err(|error| format!("failed to open live database: {error}"))?;
-        let record = create_backup_for_connection(&mut live_connection, backup_dir, "pre-restore", "restore")?;
+        let mut live_connection = Connection::open(live_db_path)
+            .map_err(|error| format!("failed to open live database: {error}"))?;
+        let record = create_backup_for_connection(
+            &mut live_connection,
+            backup_dir,
+            "pre-restore",
+            "restore",
+        )?;
         drop(live_connection);
         Some(record)
     } else {
@@ -1083,13 +1150,16 @@ fn restore_backup_from_file(live_db_path: &Path, backup_path: &Path, backup_dir:
         let _ = fs::remove_file(&shm_path);
     }
     if live_db_path.exists() {
-        fs::remove_file(live_db_path).map_err(|error| format!("failed to remove live database: {error}"))?;
+        fs::remove_file(live_db_path)
+            .map_err(|error| format!("failed to remove live database: {error}"))?;
     }
 
-    fs::copy(backup_path, live_db_path).map_err(|error| format!("failed to replace live database: {error}"))?;
+    fs::copy(backup_path, live_db_path)
+        .map_err(|error| format!("failed to replace live database: {error}"))?;
     validate_backup_file(live_db_path)?;
 
-    let restored_connection = Connection::open(live_db_path).map_err(|error| format!("failed to open restored database: {error}"))?;
+    let restored_connection = Connection::open(live_db_path)
+        .map_err(|error| format!("failed to open restored database: {error}"))?;
     run_migrations(&restored_connection)?;
     if let Some(record) = pre_restore_record {
         insert_backup_record(&restored_connection, &record)?;
@@ -1109,8 +1179,14 @@ fn get_backup_summary(connection: &Connection) -> Result<BackupSummaryRecord, St
 
     let next_automatic_backup_due_at = last_successful_automatic_backup_at
         .as_deref()
-        .and_then(|value| OffsetDateTime::parse(value, &time::format_description::well_known::Rfc3339).ok())
-        .map(|timestamp| (timestamp + Duration::hours(24)).format(&time::format_description::well_known::Rfc3339).unwrap_or_default());
+        .and_then(|value| {
+            OffsetDateTime::parse(value, &time::format_description::well_known::Rfc3339).ok()
+        })
+        .map(|timestamp| {
+            (timestamp + Duration::hours(24))
+                .format(&time::format_description::well_known::Rfc3339)
+                .unwrap_or_default()
+        });
 
     Ok(BackupSummaryRecord {
         last_successful_automatic_backup_at,
@@ -1157,7 +1233,10 @@ pub fn bootstrap(app: &AppHandle) -> Result<BootstrapPayload, String> {
     })
 }
 
-pub fn save_onboarding(app: &AppHandle, input: OnboardingInput) -> Result<OnboardingStateRecord, String> {
+pub fn save_onboarding(
+    app: &AppHandle,
+    input: OnboardingInput,
+) -> Result<OnboardingStateRecord, String> {
     validate_onboarding_input(&input)?;
     let (connection, _) = open_connection(app)?;
     connection
@@ -1179,7 +1258,9 @@ pub fn save_onboarding(app: &AppHandle, input: OnboardingInput) -> Result<Onboar
                 input.daily_check_in_time,
                 serialize_string_list(&input.selected_category_ids),
                 if input.reminders_enabled { 1 } else { 0 },
-                input.daily_review_mode.unwrap_or_else(|| "simple".to_string()),
+                input
+                    .daily_review_mode
+                    .unwrap_or_else(|| "simple".to_string()),
             ],
         )
         .map_err(|error| format!("failed to save onboarding: {error}"))?;
@@ -1187,7 +1268,10 @@ pub fn save_onboarding(app: &AppHandle, input: OnboardingInput) -> Result<Onboar
     get_onboarding(&connection)
 }
 
-pub fn save_settings(app: &AppHandle, input: UserSettingsInput) -> Result<UserSettingsRecord, String> {
+pub fn save_settings(
+    app: &AppHandle,
+    input: UserSettingsInput,
+) -> Result<UserSettingsRecord, String> {
     validate_user_settings_input(&input)?;
     let (connection, _) = open_connection(app)?;
     connection
@@ -1215,11 +1299,23 @@ pub fn save_settings(app: &AppHandle, input: UserSettingsInput) -> Result<UserSe
                 if input.reminders_enabled { 1 } else { 0 },
                 input.reminder_time,
                 serialize_reminder_days(&input.reminder_days),
-                if input.catch_up_reminder_enabled { 1 } else { 0 },
-                if input.debt_due_reminder_enabled { 1 } else { 0 },
+                if input.catch_up_reminder_enabled {
+                    1
+                } else {
+                    0
+                },
+                if input.debt_due_reminder_enabled {
+                    1
+                } else {
+                    0
+                },
                 input.quiet_hours_start,
                 input.quiet_hours_end,
-                if input.weekend_reminders_enabled { 1 } else { 0 },
+                if input.weekend_reminders_enabled {
+                    1
+                } else {
+                    0
+                },
                 input.catch_up_prompt_mode,
                 if input.show_advanced_options { 1 } else { 0 },
                 now(),
@@ -1345,7 +1441,11 @@ pub fn delete_entry(app: &AppHandle, entry_id: String) -> Result<(), String> {
     Ok(())
 }
 
-fn adjust_debt_balance(transaction: &rusqlite::Transaction<'_>, debt_id: &str, delta: f64) -> Result<(), String> {
+fn adjust_debt_balance(
+    transaction: &rusqlite::Transaction<'_>,
+    debt_id: &str,
+    delta: f64,
+) -> Result<(), String> {
     let current_balance: f64 = transaction
         .query_row(
             "SELECT balance_current FROM debts WHERE id = ?1",
@@ -1430,7 +1530,10 @@ pub fn delete_debt(app: &AppHandle, debt_id: String) -> Result<(), String> {
     Ok(())
 }
 
-pub fn record_debt_payment(app: &AppHandle, input: DebtPaymentInput) -> Result<EntryRecord, String> {
+pub fn record_debt_payment(
+    app: &AppHandle,
+    input: DebtPaymentInput,
+) -> Result<EntryRecord, String> {
     save_entry(
         app,
         EntryInput {
@@ -1521,9 +1624,15 @@ pub fn export_debts_csv(app: &AppHandle, destination: &str) -> Result<String, St
             csv_value(&debt.name),
             csv_optional(debt.lender.as_deref()),
             debt.balance_current,
-            debt.interest_rate.map(|value| value.to_string()).unwrap_or_default(),
-            debt.minimum_payment.map(|value| format!("{value:.2}")).unwrap_or_default(),
-            debt.due_day.map(|value| value.to_string()).unwrap_or_default(),
+            debt.interest_rate
+                .map(|value| value.to_string())
+                .unwrap_or_default(),
+            debt.minimum_payment
+                .map(|value| format!("{value:.2}"))
+                .unwrap_or_default(),
+            debt.due_day
+                .map(|value| value.to_string())
+                .unwrap_or_default(),
             if debt.is_active { "Yes" } else { "No" },
             csv_value(&debt.created_at),
             csv_value(&debt.updated_at),
@@ -1538,10 +1647,12 @@ pub fn create_backup(app: &AppHandle, destination: &str) -> Result<String, Strin
     let (connection, _) = open_connection(app)?;
     let path = PathBuf::from(destination);
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).map_err(|error| format!("failed to prepare backup directory: {error}"))?;
+        fs::create_dir_all(parent)
+            .map_err(|error| format!("failed to prepare backup directory: {error}"))?;
     }
     if path.exists() {
-        fs::remove_file(&path).map_err(|error| format!("failed to replace backup file: {error}"))?;
+        fs::remove_file(&path)
+            .map_err(|error| format!("failed to replace backup file: {error}"))?;
     }
 
     connection
@@ -1570,13 +1681,18 @@ fn find_backup_record(connection: &Connection, backup_id: &str) -> Result<Backup
         .map_err(|error| format!("failed to load backup record: {error}"))
 }
 
-fn automatic_backup_is_due(last_successful_automatic_backup_at: Option<&str>) -> Result<bool, String> {
+fn automatic_backup_is_due(
+    last_successful_automatic_backup_at: Option<&str>,
+) -> Result<bool, String> {
     let Some(last_successful_automatic_backup_at) = last_successful_automatic_backup_at else {
         return Ok(true);
     };
 
-    let last_backup = OffsetDateTime::parse(last_successful_automatic_backup_at, &time::format_description::well_known::Rfc3339)
-        .map_err(|error| format!("failed to parse automatic backup timestamp: {error}"))?;
+    let last_backup = OffsetDateTime::parse(
+        last_successful_automatic_backup_at,
+        &time::format_description::well_known::Rfc3339,
+    )
+    .map_err(|error| format!("failed to parse automatic backup timestamp: {error}"))?;
     Ok(OffsetDateTime::now_utc() >= last_backup + Duration::hours(24))
 }
 
@@ -1592,7 +1708,8 @@ pub fn run_automatic_backup_if_due(app: &AppHandle) -> Result<Option<BackupRecor
         return Ok(None);
     }
 
-    let record = create_backup_for_connection(&mut connection, &paths.backup_dir, "auto", "scheduler")?;
+    let record =
+        create_backup_for_connection(&mut connection, &paths.backup_dir, "auto", "scheduler")?;
     prune_automatic_backups(&connection)?;
     Ok(Some(record))
 }
@@ -1612,7 +1729,8 @@ pub fn restore_backup(app: &AppHandle, backup_id: &str) -> Result<(), String> {
 fn write_text_file(destination: &str, contents: &str) -> Result<(), String> {
     let path = Path::new(destination);
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).map_err(|error| format!("failed to prepare export directory: {error}"))?;
+        fs::create_dir_all(parent)
+            .map_err(|error| format!("failed to prepare export directory: {error}"))?;
     }
 
     fs::write(path, contents).map_err(|error| format!("failed to write file: {error}"))
@@ -1713,7 +1831,11 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM user_settings", [], |row| row.get(0))
             .expect("user settings count");
         let version: i64 = connection
-            .query_row("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1", [], |row| row.get(0))
+            .query_row(
+                "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1",
+                [],
+                |row| row.get(0),
+            )
             .expect("schema version");
 
         assert_eq!(settings_count, 1);
@@ -1794,7 +1916,11 @@ mod tests {
         let entries = list_entries(&connection, None).expect("entries list");
         let debts = list_debts(&connection).expect("debts list");
         let version: i64 = connection
-            .query_row("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1", [], |row| row.get(0))
+            .query_row(
+                "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1",
+                [],
+                |row| row.get(0),
+            )
             .expect("schema version");
 
         assert_eq!(version, SCHEMA_VERSION);
@@ -1892,10 +2018,18 @@ mod tests {
         run_migrations(&connection).expect("migration success");
 
         let theme_mode: String = connection
-            .query_row("SELECT theme_mode FROM user_settings WHERE id = 1", [], |row| row.get(0))
+            .query_row(
+                "SELECT theme_mode FROM user_settings WHERE id = 1",
+                [],
+                |row| row.get(0),
+            )
             .expect("theme mode");
         let version: i64 = connection
-            .query_row("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1", [], |row| row.get(0))
+            .query_row(
+                "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1",
+                [],
+                |row| row.get(0),
+            )
             .expect("schema version");
 
         assert_eq!(theme_mode, "system");
@@ -2025,7 +2159,10 @@ mod tests {
                     updated_at = ?2
                 WHERE id = 1
                 ",
-                params![serialize_string_list(&["cat-groceries".to_string(), "cat-gas".to_string()]), now()],
+                params![
+                    serialize_string_list(&["cat-groceries".to_string(), "cat-gas".to_string()]),
+                    now()
+                ],
             )
             .expect("update onboarding");
 
@@ -2033,7 +2170,10 @@ mod tests {
 
         assert!(onboarding.has_completed_onboarding);
         assert_eq!(onboarding.daily_check_in_time.as_deref(), Some("18:45"));
-        assert_eq!(onboarding.selected_category_ids, vec!["cat-groceries", "cat-gas"]);
+        assert_eq!(
+            onboarding.selected_category_ids,
+            vec!["cat-groceries", "cat-gas"]
+        );
     }
 
     #[test]
@@ -2042,7 +2182,8 @@ mod tests {
         run_migrations(&connection).expect("migration success");
         let backup_dir = unique_temp_dir("backup-create");
 
-        let record = create_backup_for_connection(&mut connection, &backup_dir, "manual", "user").expect("backup created");
+        let record = create_backup_for_connection(&mut connection, &backup_dir, "manual", "user")
+            .expect("backup created");
 
         assert!(Path::new(&record.file_path).exists());
         validate_backup_file(Path::new(&record.file_path)).expect("backup validates");
@@ -2251,13 +2392,12 @@ mod tests {
             )
             .expect("insert original entry");
 
-        let source_backup = create_backup_for_connection(&mut live_connection, &backup_dir, "manual", "user").expect("source backup");
+        let source_backup =
+            create_backup_for_connection(&mut live_connection, &backup_dir, "manual", "user")
+                .expect("source backup");
 
         live_connection
-            .execute(
-                "DELETE FROM entries WHERE id = ?1",
-                params!["entry-before"],
-            )
+            .execute("DELETE FROM entries WHERE id = ?1", params!["entry-before"])
             .expect("delete original entry");
         live_connection
             .execute(
@@ -2280,7 +2420,12 @@ mod tests {
             .expect("insert changed entry");
         drop(live_connection);
 
-        restore_backup_from_file(&live_db_path, Path::new(&source_backup.file_path), &backup_dir).expect("restore succeeds");
+        restore_backup_from_file(
+            &live_db_path,
+            Path::new(&source_backup.file_path),
+            &backup_dir,
+        )
+        .expect("restore succeeds");
 
         let restored_connection = Connection::open(&live_db_path).expect("restored live db");
         let entry_ids: Vec<String> = restored_connection
@@ -2315,7 +2460,8 @@ mod tests {
         let invalid_backup_path = backup_dir.join("invalid.sqlite");
         fs::write(&invalid_backup_path, b"not-a-sqlite-file").expect("invalid backup file");
 
-        let error = restore_backup_from_file(&live_db_path, &invalid_backup_path, &backup_dir).expect_err("restore should fail");
+        let error = restore_backup_from_file(&live_db_path, &invalid_backup_path, &backup_dir)
+            .expect_err("restore should fail");
 
         assert!(
             error.contains("failed to open backup file")

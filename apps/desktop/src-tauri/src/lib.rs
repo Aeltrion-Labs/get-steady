@@ -2,13 +2,14 @@ mod db;
 mod models;
 
 use db::{
-    bootstrap, create_backup, create_managed_manual_backup, delete_debt, delete_entry, export_debts_csv,
-    export_entries_csv, list_backups, list_entries, mark_check_in, open_connection, record_debt_payment,
-    restore_backup, run_automatic_backup_if_due, save_debt, save_entry, save_onboarding, save_settings,
+    bootstrap, create_backup, create_managed_manual_backup, delete_debt, delete_entry,
+    export_debts_csv, export_entries_csv, list_backups, list_entries, mark_check_in,
+    open_connection, record_debt_payment, restore_backup, run_automatic_backup_if_due, save_debt,
+    save_entry, save_onboarding, save_settings,
 };
 use models::{
-    BackupRecord, BootstrapPayload, CheckInInput, DebtInput, DebtPaymentInput, EntryFilters, EntryInput, OnboardingInput,
-    UserSettingsInput,
+    BackupRecord, BootstrapPayload, CheckInInput, DebtInput, DebtPaymentInput, EntryFilters,
+    EntryInput, OnboardingInput, UserSettingsInput,
 };
 
 #[tauri::command]
@@ -26,7 +27,10 @@ fn list_entries_command(
 }
 
 #[tauri::command]
-fn save_entry_command(app: tauri::AppHandle, input: EntryInput) -> Result<models::EntryRecord, String> {
+fn save_entry_command(
+    app: tauri::AppHandle,
+    input: EntryInput,
+) -> Result<models::EntryRecord, String> {
     save_entry(&app, input)
 }
 
@@ -36,7 +40,10 @@ fn delete_entry_command(app: tauri::AppHandle, entry_id: String) -> Result<(), S
 }
 
 #[tauri::command]
-fn save_debt_command(app: tauri::AppHandle, input: DebtInput) -> Result<models::DebtRecord, String> {
+fn save_debt_command(
+    app: tauri::AppHandle,
+    input: DebtInput,
+) -> Result<models::DebtRecord, String> {
     save_debt(&app, input)
 }
 
@@ -46,27 +53,42 @@ fn delete_debt_command(app: tauri::AppHandle, debt_id: String) -> Result<(), Str
 }
 
 #[tauri::command]
-fn record_debt_payment_command(app: tauri::AppHandle, input: DebtPaymentInput) -> Result<models::EntryRecord, String> {
+fn record_debt_payment_command(
+    app: tauri::AppHandle,
+    input: DebtPaymentInput,
+) -> Result<models::EntryRecord, String> {
     record_debt_payment(&app, input)
 }
 
 #[tauri::command]
-fn mark_check_in_command(app: tauri::AppHandle, input: CheckInInput) -> Result<models::CheckInRecord, String> {
+fn mark_check_in_command(
+    app: tauri::AppHandle,
+    input: CheckInInput,
+) -> Result<models::CheckInRecord, String> {
     mark_check_in(&app, input)
 }
 
 #[tauri::command]
-fn save_onboarding_command(app: tauri::AppHandle, input: OnboardingInput) -> Result<models::OnboardingStateRecord, String> {
+fn save_onboarding_command(
+    app: tauri::AppHandle,
+    input: OnboardingInput,
+) -> Result<models::OnboardingStateRecord, String> {
     save_onboarding(&app, input)
 }
 
 #[tauri::command]
-fn save_settings_command(app: tauri::AppHandle, input: UserSettingsInput) -> Result<models::UserSettingsRecord, String> {
+fn save_settings_command(
+    app: tauri::AppHandle,
+    input: UserSettingsInput,
+) -> Result<models::UserSettingsRecord, String> {
     save_settings(&app, input)
 }
 
 #[tauri::command]
-fn export_entries_csv_command(app: tauri::AppHandle, destination: String) -> Result<String, String> {
+fn export_entries_csv_command(
+    app: tauri::AppHandle,
+    destination: String,
+) -> Result<String, String> {
     export_entries_csv(&app, &destination)
 }
 

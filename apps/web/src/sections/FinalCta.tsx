@@ -12,8 +12,8 @@ export function FinalCta() {
           Start with one honest check-in.
         </h2>
         <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-          Download the app, log today, and start getting steady with your money.
-          Free, local, and open source from day one.
+          Download the app, log today, and start getting steady with your money. Free, local, and
+          open source from day one.
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -38,9 +38,13 @@ export function FinalCta() {
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
           <span>Private by default</span>
-          <span aria-hidden="true" className="hidden sm:inline">·</span>
+          <span aria-hidden="true" className="hidden sm:inline">
+            ·
+          </span>
           <span>No required account</span>
-          <span aria-hidden="true" className="hidden sm:inline">·</span>
+          <span aria-hidden="true" className="hidden sm:inline">
+            ·
+          </span>
           <span>Built for consistency, not perfection</span>
         </div>
       </div>

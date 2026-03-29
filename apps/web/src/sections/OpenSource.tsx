@@ -11,13 +11,14 @@ export function OpenSource() {
               Open source
             </p>
             <h2 className="font-display text-4xl leading-tight text-foreground md:text-5xl">
-              Free forever.<br />Open by default.
+              Free forever.
+              <br />
+              Open by default.
             </h2>
             <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-              This project exists as a practical alternative for people who want
-              ownership, simplicity, and a local-first workflow. No subscription
-              required. Use it, inspect it, adapt it, and build on top of it
-              under the MIT License.
+              This project exists as a practical alternative for people who want ownership,
+              simplicity, and a local-first workflow. No subscription required. Use it, inspect it,
+              adapt it, and build on top of it under the MIT License.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
@@ -42,10 +43,19 @@ export function OpenSource() {
 
           <div className="space-y-4">
             {[
-              ["Free and open source", "No subscription required, no pricing tier that gates core features."],
-              ["Inspect the code", "The full source is on GitHub. Read it, fork it, verify what it does under the MIT License."],
+              [
+                "Free and open source",
+                "No subscription required, no pricing tier that gates core features.",
+              ],
+              [
+                "Inspect the code",
+                "The full source is on GitHub. Read it, fork it, verify what it does under the MIT License.",
+              ],
               ["Portable by design", "Export your data in practical formats and take it anywhere."],
-              ["Extensible for power users", "CLI, API, and MCP extensibility planned for technical audiences."],
+              [
+                "Extensible for power users",
+                "CLI, API, and MCP extensibility planned for technical audiences.",
+              ],
             ].map(([title, body]) => (
               <div key={title} className="rounded-2xl border border-border bg-card/60 px-5 py-4">
                 <p className="text-sm font-semibold text-foreground">{title}</p>
