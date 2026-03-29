@@ -2,10 +2,14 @@ mod db;
 mod models;
 
 use db::{
-    bootstrap, create_backup, delete_debt, delete_entry, export_debts_csv, export_entries_csv, list_entries,
-    mark_check_in, open_connection, record_debt_payment, save_debt, save_entry, save_onboarding, save_settings,
+    bootstrap, create_backup, create_managed_manual_backup, delete_debt, delete_entry, export_debts_csv,
+    export_entries_csv, list_backups, list_entries, mark_check_in, open_connection, record_debt_payment,
+    restore_backup, run_automatic_backup_if_due, save_debt, save_entry, save_onboarding, save_settings,
 };
-use models::{BootstrapPayload, CheckInInput, DebtInput, DebtPaymentInput, EntryFilters, EntryInput, OnboardingInput, UserSettingsInput};
+use models::{
+    BackupRecord, BootstrapPayload, CheckInInput, DebtInput, DebtPaymentInput, EntryFilters, EntryInput, OnboardingInput,
+    UserSettingsInput,
+};
 
 #[tauri::command]
 fn bootstrap_app(app: tauri::AppHandle) -> Result<BootstrapPayload, String> {
@@ -76,6 +80,27 @@ fn create_backup_command(app: tauri::AppHandle, destination: String) -> Result<S
     create_backup(&app, &destination)
 }
 
+#[tauri::command]
+fn list_backups_command(app: tauri::AppHandle) -> Result<Vec<BackupRecord>, String> {
+    list_backups(&app)
+}
+
+#[tauri::command]
+fn create_manual_backup_command(app: tauri::AppHandle) -> Result<BackupRecord, String> {
+    create_managed_manual_backup(&app)
+}
+
+#[tauri::command]
+fn run_automatic_backup_command(app: tauri::AppHandle) -> Result<Option<BackupRecord>, String> {
+    run_automatic_backup_if_due(&app)
+}
+
+#[tauri::command]
+fn restore_backup_command(app: tauri::AppHandle, backup_id: String) -> Result<(), String> {
+    restore_backup(&app, &backup_id)?;
+    app.restart()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -95,6 +120,10 @@ pub fn run() {
             export_entries_csv_command,
             export_debts_csv_command,
             create_backup_command,
+            list_backups_command,
+            create_manual_backup_command,
+            run_automatic_backup_command,
+            restore_backup_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

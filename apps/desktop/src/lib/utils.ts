@@ -30,5 +30,18 @@ export function formatShortDate(date: string) {
 }
 
 export function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+  return formatLocalDate(new Date());
+}
+
+export function currentLocalClock() {
+  const now = new Date();
+  return {
+    localDate: formatLocalDate(now),
+    localTime: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
+    localWeekday: now.getDay(),
+  };
+}
+
+function formatLocalDate(value: Date) {
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
 }

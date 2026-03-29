@@ -52,12 +52,12 @@ export function LedgerScreen({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-[32px] border border-border bg-card/90 p-6 shadow-card lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-4 rounded-[32px] border border-border bg-card/90 p-6 shadow-panel lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <Badge>Ledger</Badge>
+          <Badge>History</Badge>
           <h1 className="mt-3 font-display text-4xl text-foreground">Every entry stays editable.</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            Backdate it, fix it, or delete it. Manual tracking only works if correction is easy.
+            Backdate it, fix it, or delete it. Daily tracking only works if correction stays easy.
           </p>
         </div>
         <Button onClick={() => setShowCreateForm((current) => !current)}>{showCreateForm ? "Close form" : "Add entry"}</Button>

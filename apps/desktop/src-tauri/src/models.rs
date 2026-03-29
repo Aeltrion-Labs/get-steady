@@ -63,6 +63,31 @@ pub struct BootstrapPayload {
     pub check_ins: Vec<CheckInRecord>,
     pub onboarding: OnboardingStateRecord,
     pub settings: UserSettingsRecord,
+    pub backup_summary: BackupSummaryRecord,
+    pub backups: Vec<BackupRecord>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BackupRecord {
+    pub id: String,
+    pub kind: String,
+    pub status: String,
+    pub file_path: String,
+    pub file_name: String,
+    pub created_at: String,
+    pub completed_at: Option<String>,
+    pub size_bytes: Option<i64>,
+    pub error_message: Option<String>,
+    pub triggered_by: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BackupSummaryRecord {
+    pub last_successful_automatic_backup_at: Option<String>,
+    pub next_automatic_backup_due_at: Option<String>,
+    pub retention_policy: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -73,6 +98,7 @@ pub struct OnboardingStateRecord {
     pub daily_check_in_time: Option<String>,
     pub reminders_enabled: bool,
     pub daily_review_mode: String,
+    pub selected_category_ids: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -92,7 +118,7 @@ pub struct UserSettingsRecord {
     pub show_advanced_options: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EntryInput {
     pub id: Option<String>,
@@ -107,7 +133,7 @@ pub struct EntryInput {
     pub is_estimated: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EntryFilters {
     pub entry_type: Option<String>,
@@ -116,7 +142,7 @@ pub struct EntryFilters {
     pub end_date: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DebtInput {
     pub id: Option<String>,
@@ -129,7 +155,7 @@ pub struct DebtInput {
     pub is_active: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DebtPaymentInput {
     pub debt_id: String,
@@ -138,7 +164,7 @@ pub struct DebtPaymentInput {
     pub note: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CheckInInput {
     pub date: String,
@@ -146,7 +172,7 @@ pub struct CheckInInput {
     pub note: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OnboardingInput {
     pub daily_check_in_time: Option<String>,
@@ -155,7 +181,7 @@ pub struct OnboardingInput {
     pub selected_category_ids: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserSettingsInput {
     pub default_view: String,

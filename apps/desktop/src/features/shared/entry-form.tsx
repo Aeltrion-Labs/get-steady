@@ -94,7 +94,7 @@ export function EntryForm({
 
     try {
       await onSubmit({
-        id: initialEntry?.id,
+        ...(initialEntry ? { id: initialEntry.id } : {}),
         type: parsed.data.type,
         amount: parsed.data.amount,
         categoryId: parsed.data.type === "debt_payment" ? "cat-debt-payment" : parsed.data.categoryId,

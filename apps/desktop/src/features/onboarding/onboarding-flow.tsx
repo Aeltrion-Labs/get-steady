@@ -48,16 +48,16 @@ export function OnboardingFlow({
           <div className="relative space-y-8">
             <Badge className="border-white/15 bg-white/10 text-slate-200">First run</Badge>
             <div className="space-y-4">
-              <h1 className="max-w-md font-display text-5xl leading-[1.05] text-white">Own your money habit</h1>
+              <h1 className="max-w-md font-display text-5xl leading-[1.05] text-white">Get steady with your money</h1>
               <p className="max-w-lg text-base leading-7 text-slate-200/88">
-                Get Steady is a quiet local console for money awareness. The goal is not perfection. It is helping you
-                face today, reduce debt pressure, and keep cashflow visible without a giant budgeting setup.
+                Get Steady is a calm local app for daily money awareness. The goal is not perfection. It is helping
+                you face spending, debt, and monthly cashflow without building a giant finance system.
               </p>
             </div>
 
             <div className="grid gap-3">
               {[
-                "Manual by design, so daily review feels intentional.",
+                "Manual by design, so daily check-ins stay intentional.",
                 "Local-first, so your data stays on your machine.",
                 "Recovery-friendly, so missed days never become shame loops.",
               ].map((item) => (
@@ -122,7 +122,7 @@ export function OnboardingFlow({
                 <h2 className="font-display text-3xl text-foreground">Start simple</h2>
                 <p className="text-sm leading-6 text-muted-foreground">
                   We’ll set a daily rhythm and a few starter categories. No bank links, no long questionnaire, no
-                  pressure to get everything perfect before you begin.
+                  pressure to build a full system before you begin.
                 </p>
               </div>
               <div className="rounded-[24px] border border-border bg-muted/50 p-5">
@@ -229,8 +229,8 @@ export function OnboardingFlow({
               <div className="space-y-3">
                 <h2 className="font-display text-3xl text-foreground">You’re ready for today</h2>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  Start with one income or expense entry, glance at debt if it matters today, and close the loop when
-                  the day feels accounted for.
+                  Start with one income, spending, or debt entry, then close the loop once you have an honest read on
+                  the day.
                 </p>
               </div>
               <div className="grid gap-3 md:grid-cols-3">

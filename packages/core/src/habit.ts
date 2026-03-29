@@ -14,6 +14,17 @@ export type CalendarDay = {
   hasDueMarker: boolean;
 };
 
+export type CalendarGridCell =
+  | {
+      kind: "spacer";
+      key: string;
+    }
+  | {
+      kind: "day";
+      key: string;
+      day: CalendarDay;
+    };
+
 export type ReminderSettings = {
   remindersEnabled: boolean;
   reminderTime: string;
@@ -42,6 +53,7 @@ export function buildCalendarMonth(input: {
   const monthIndex = Number(monthText) - 1;
   const firstDate = isoDate(new Date(Date.UTC(year, monthIndex, 1)));
   const lastDate = isoDate(new Date(Date.UTC(year, monthIndex + 1, 0)));
+  const leadingSpacerCount = new Date(Date.UTC(year, monthIndex, 1)).getUTCDay();
 
   const days = listDatesBetween(firstDate, lastDate).map((date) => {
     const dayEntries = input.entries.filter((entry) => entry.entryDate === date);
@@ -88,9 +100,25 @@ export function buildCalendarMonth(input: {
     return compareIsoDates(day.date, firstTrackedDate) > 0 && compareIsoDates(day.date, input.today) < 0;
   });
 
+  const leadingSpacers: CalendarGridCell[] = Array.from({ length: leadingSpacerCount }, (_, index) => ({
+    kind: "spacer",
+    key: `leading-${index}`,
+  }));
+  const dayCells: CalendarGridCell[] = days.map((day) => ({
+    kind: "day",
+    key: day.date,
+    day,
+  }));
+  const trailingSpacerCount = (7 - ((leadingSpacers.length + dayCells.length) % 7)) % 7;
+  const trailingSpacers: CalendarGridCell[] = Array.from({ length: trailingSpacerCount }, (_, index) => ({
+    kind: "spacer",
+    key: `trailing-${index}`,
+  }));
+
   return {
     month: input.month,
     days,
+    grid: [...leadingSpacers, ...dayCells, ...trailingSpacers],
     recovery: {
       oldestMissedDate: missedDays[0]?.date ?? null,
       missedCount: missedDays.length,
@@ -99,7 +127,9 @@ export function buildCalendarMonth(input: {
 }
 
 export function evaluateReminderPlan(input: {
-  now: string;
+  localDate: string;
+  localTime: string;
+  localWeekday: number;
   today: string;
   settings: ReminderSettings;
   checkIns: CheckIn[];
@@ -123,7 +153,8 @@ export function evaluateReminderPlan(input: {
 }
 
 function evaluateDailyCheckIn(input: {
-  now: string;
+  localTime: string;
+  localWeekday: number;
   today: string;
   settings: ReminderSettings;
   checkIns: CheckIn[];
@@ -134,13 +165,13 @@ function evaluateDailyCheckIn(input: {
   if (!input.settings.remindersEnabled) {
     return { shouldSend: false, reason: "disabled" };
   }
-  if (isWithinQuietHours(input.now, input.settings)) {
+  if (isWithinQuietHours(input.localTime, input.settings)) {
     return { shouldSend: false, reason: "quiet_hours" };
   }
-  if (!isReminderDay(input.now, input.settings)) {
+  if (!isReminderDay(input.localWeekday, input.settings)) {
     return { shouldSend: false, reason: "not_scheduled_day" };
   }
-  if (!hasReachedReminderTime(input.now, input.settings.reminderTime)) {
+  if (!hasReachedReminderTime(input.localTime, input.settings.reminderTime)) {
     return { shouldSend: false, reason: "too_early" };
   }
   if (input.checkIns.some((checkIn) => checkIn.date === input.today && (checkIn.completed || checkIn.isPartial))) {
@@ -153,7 +184,7 @@ function evaluateDailyCheckIn(input: {
 }
 
 function evaluateCatchUp(input: {
-  now: string;
+  localTime: string;
   today: string;
   settings: ReminderSettings;
   checkIns: CheckIn[];
@@ -189,7 +220,7 @@ function evaluateCatchUp(input: {
     }
   }
 
-  if (isWithinQuietHours(input.now, input.settings)) {
+  if (isWithinQuietHours(input.localTime, input.settings)) {
     return { shouldSend: false, reason: "quiet_hours" };
   }
 
@@ -198,7 +229,7 @@ function evaluateCatchUp(input: {
 
 function evaluateDebtDue(
   input: {
-    now: string;
+    localTime: string;
     today: string;
     settings: ReminderSettings;
     deliveryHistory: {
@@ -210,10 +241,10 @@ function evaluateDebtDue(
   if (!input.settings.remindersEnabled || !input.settings.debtDueReminderEnabled) {
     return { shouldSend: false, reason: "disabled" };
   }
-  if (isWithinQuietHours(input.now, input.settings)) {
+  if (isWithinQuietHours(input.localTime, input.settings)) {
     return { shouldSend: false, reason: "quiet_hours" };
   }
-  if (!hasReachedReminderTime(input.now, input.settings.reminderTime)) {
+  if (!hasReachedReminderTime(input.localTime, input.settings.reminderTime)) {
     return { shouldSend: false, reason: "too_early" };
   }
 
@@ -233,25 +264,22 @@ function evaluateDebtDue(
   return { shouldSend: true };
 }
 
-function isReminderDay(now: string, settings: ReminderSettings) {
-  const dayOfWeek = new Date(now).getUTCDay();
-  if (!settings.weekendRemindersEnabled && (dayOfWeek === 0 || dayOfWeek === 6)) {
+function isReminderDay(localWeekday: number, settings: ReminderSettings) {
+  if (!settings.weekendRemindersEnabled && (localWeekday === 0 || localWeekday === 6)) {
     return false;
   }
-  return settings.reminderDays.includes(dayOfWeek);
+  return settings.reminderDays.includes(localWeekday);
 }
 
-function hasReachedReminderTime(now: string, reminderTime: string) {
-  const current = now.slice(11, 16);
-  return current >= reminderTime;
+function hasReachedReminderTime(localTime: string, reminderTime: string) {
+  return localTime >= reminderTime;
 }
 
-function isWithinQuietHours(now: string, settings: ReminderSettings) {
-  const current = now.slice(11, 16);
+function isWithinQuietHours(localTime: string, settings: ReminderSettings) {
   if (settings.quietHoursStart <= settings.quietHoursEnd) {
-    return current >= settings.quietHoursStart && current < settings.quietHoursEnd;
+    return localTime >= settings.quietHoursStart && localTime < settings.quietHoursEnd;
   }
-  return current >= settings.quietHoursStart || current < settings.quietHoursEnd;
+  return localTime >= settings.quietHoursStart || localTime < settings.quietHoursEnd;
 }
 
 function isDueSoonMarker(date: string, dueDay: number) {

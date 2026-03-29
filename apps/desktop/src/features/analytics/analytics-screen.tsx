@@ -75,12 +75,12 @@ export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-[32px] border border-border bg-card/90 p-6 shadow-card lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-4 rounded-[32px] border border-border bg-card/90 p-6 shadow-panel lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-3">
           <Badge>Analytics</Badge>
-          <h1 className="font-display text-4xl text-foreground">Mission Status</h1>
+          <h1 className="font-display text-4xl text-foreground">Steady Check</h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
-            A short read on whether debt is shrinking and whether this month is staying cashflow positive.
+            A short read on whether debt is moving down and whether this month is getting steadier.
           </p>
         </div>
         <Badge
@@ -100,7 +100,7 @@ export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <Gauge className="h-5 w-5 text-primary" />
-              <h2 className="font-display text-3xl text-foreground">Mission read</h2>
+              <h2 className="font-display text-3xl text-foreground">Where things stand</h2>
             </div>
             <p className="max-w-3xl text-xl font-semibold text-foreground">{summary.primaryMessage}</p>
             <p className="max-w-3xl text-sm text-muted-foreground">{summary.secondaryMessage}</p>
@@ -140,12 +140,12 @@ export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
           detail={`${formatCurrency(summary.currentMonth.debtPayments)} paid this month`}
         />
         <MetricCard
-          label="Debt free pace"
+          label="Debt payoff pace"
           value={formatMonths(summary.estimatedMonthsToDebtFree)}
           detail={`${formatDelta(summary.debtPaymentChange)} payment pace vs last month`}
         />
         <MetricCard
-          label="Cashflow direction"
+          label="Monthly direction"
           value={summary.cashflowDirection}
           detail={`${summary.currentMonth.label} net: ${formatCurrency(summary.currentMonth.netMargin)}`}
         />
@@ -156,7 +156,7 @@ export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
           <div>
             <h2 className="font-display text-2xl text-foreground">What needs attention now</h2>
             <p className="text-sm text-muted-foreground">
-              The point is to leave with a clear next focus, not to interpret a wall of reporting.
+              The point is to leave with one clear next move, not a wall of reporting.
             </p>
           </div>
           <div className="space-y-3">
@@ -191,7 +191,7 @@ export function AnalyticsScreen({ summary }: { summary: AnalyticsSummary }) {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 className="font-display text-2xl text-foreground">Month vs last month</h2>
-            <p className="text-sm text-muted-foreground">Income and outflow stay visible, but only to support the mission read.</p>
+            <p className="text-sm text-muted-foreground">Income and outflow stay visible, but only to help you see whether things are settling down.</p>
           </div>
           <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
             <CircleDollarSign className="h-4 w-4" />

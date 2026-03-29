@@ -6,25 +6,57 @@ import { Card } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Select } from "../../components/ui/select";
+import type { BackupRecord, BackupSummary } from "../../lib/api";
+
+function formatBackupTime(value: string | null) {
+  if (!value) return "Not yet";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function formatBackupSize(sizeBytes: number | null) {
+  if (!sizeBytes || sizeBytes <= 0) return "Pending";
+  if (sizeBytes < 1024 * 1024) {
+    return `${Math.round(sizeBytes / 1024)} KB`;
+  }
+  return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatBackupKind(kind: BackupRecord["kind"]) {
+  if (kind === "pre-restore") return "Pre-restore";
+  return kind.slice(0, 1).toUpperCase() + kind.slice(1);
+}
 
 export function SettingsScreen({
   dataPath,
   exportDirectory,
   backupDirectory,
   settings,
+  backupSummary,
+  backups,
   onSaveSettings,
   onExportEntries,
   onExportDebts,
-  onBackup,
+  onCreateBackup,
+  onRestoreBackup,
+  onRevealBackupFolder,
 }: {
   dataPath: string;
   exportDirectory: string;
   backupDirectory: string;
   settings: UserSettings;
+  backupSummary: BackupSummary;
+  backups: BackupRecord[];
   onSaveSettings: (input: UserSettings) => Promise<void> | void;
   onExportEntries: () => Promise<void> | void;
   onExportDebts: () => Promise<void> | void;
-  onBackup: () => Promise<void> | void;
+  onCreateBackup: () => Promise<void> | void;
+  onRestoreBackup: (backupId: string) => Promise<void> | void;
+  onRevealBackupFolder: () => Promise<void> | void;
 }) {
   const [draft, setDraft] = useState(settings);
 
@@ -39,34 +71,15 @@ export function SettingsScreen({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 xl:grid-cols-[1.05fr,0.95fr]">
-        <div className="rounded-[32px] border border-border/80 bg-card/95 p-6 shadow-card">
-          <Badge>Settings</Badge>
-          <h1 className="mt-3 font-display text-4xl text-foreground">Local, visible, portable.</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Tune habit support, keep your data portable, and make the app feel calmer to return to each day.
-          </p>
-        </div>
-        <Card className="border-primary/10 bg-slate-950 text-slate-50 shadow-[0_20px_48px_rgba(23,34,46,0.24)]">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-300/85">Trust notes</p>
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
-            <div>
-              <p className="text-sm text-slate-300">Ownership</p>
-              <p className="mt-1 text-sm leading-6 text-white">Exports and backups stay explicit and visible.</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-300">Reminder style</p>
-              <p className="mt-1 text-sm leading-6 text-white">Reminders should nudge, not scold.</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-300">Boundaries</p>
-              <p className="mt-1 text-sm leading-6 text-white">Developer integrations remain outside this user-facing area.</p>
-            </div>
-          </div>
-        </Card>
+      <div className="rounded-[32px] border border-border/80 bg-card/95 p-6 shadow-panel">
+        <Badge>Settings</Badge>
+        <h1 className="mt-3 font-display text-4xl text-foreground">Local, visible, portable.</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          Tune habit support, keep your data portable, and make the app feel calmer to return to each day.
+        </p>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">
+      <div className="grid gap-4">
         <Card className="space-y-4">
           <div className="space-y-2">
             <h2 className="font-display text-2xl text-foreground">Habit support</h2>
@@ -144,7 +157,7 @@ export function SettingsScreen({
               >
                 <option value="today">Today</option>
                 <option value="calendar">Calendar</option>
-                <option value="ledger">Ledger</option>
+                <option value="ledger">History</option>
                 <option value="debts">Debts</option>
                 <option value="analytics">Analytics</option>
                 <option value="settings">Settings</option>
@@ -192,16 +205,6 @@ export function SettingsScreen({
           </div>
         </Card>
 
-        <Card className="space-y-4">
-          <div className="space-y-2">
-            <h2 className="font-display text-2xl text-foreground">Storage</h2>
-            <p className="text-sm text-muted-foreground">Your local database path stays visible because ownership should feel concrete.</p>
-          </div>
-          <code className="rounded-[22px] border border-border bg-muted/35 px-4 py-4 text-sm text-foreground">{dataPath}</code>
-          <p className="text-xs text-muted-foreground">
-            Developer settings and integrations remain intentionally separate from this user-facing settings area.
-          </p>
-        </Card>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
@@ -210,6 +213,7 @@ export function SettingsScreen({
             <h2 className="font-display text-2xl text-foreground">Export</h2>
             <p className="text-sm text-muted-foreground">Take readable copies of your data whenever you want.</p>
           </div>
+          <p className="text-sm text-muted-foreground">Storage: {dataPath}</p>
           <p className="text-sm text-muted-foreground">Default export directory: {exportDirectory}</p>
           <div className="flex flex-wrap gap-3">
             <Button onClick={() => void onExportEntries()}>Export entries CSV</Button>
@@ -222,12 +226,66 @@ export function SettingsScreen({
 
         <Card className="space-y-4">
           <div className="space-y-2">
-            <h2 className="font-display text-2xl text-foreground">Backups</h2>
-            <p className="text-sm text-muted-foreground">Quiet safety rails matter more than clever automation.</p>
+            <h2 className="font-display text-2xl text-foreground">Backup management</h2>
+            <p className="text-sm text-muted-foreground">Automatic recovery points stay quiet until they are needed. Restore is cautious on purpose.</p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-[22px] border border-border bg-muted/25 p-4">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Last automatic backup</p>
+              <p className="mt-2 text-sm font-semibold text-foreground">{formatBackupTime(backupSummary.lastSuccessfulAutomaticBackupAt)}</p>
+            </div>
+            <div className="rounded-[22px] border border-border bg-muted/25 p-4">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Next automatic backup due</p>
+              <p className="mt-2 text-sm font-semibold text-foreground">{formatBackupTime(backupSummary.nextAutomaticBackupDueAt)}</p>
+            </div>
           </div>
           <p className="text-sm text-muted-foreground">Default backup directory: {backupDirectory}</p>
-          <Button onClick={() => void onBackup()}>Create database backup</Button>
-          <p className="text-xs text-muted-foreground">Restore/import UI remains deferred while the habit loop is being strengthened.</p>
+          <p className="text-sm text-muted-foreground">Retention: {backupSummary.retentionPolicy}</p>
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={() => void onCreateBackup()}>Create backup now</Button>
+            <Button variant="secondary" onClick={() => void onRevealBackupFolder()}>
+              Reveal backup folder
+            </Button>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-foreground">Available backups</h3>
+              <p className="text-xs text-muted-foreground">Successful backups can be restored after a safety snapshot of your current database is created.</p>
+            </div>
+            {backups.length === 0 ? (
+              <div className="rounded-[22px] border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground">
+                No backups exist yet. The app will create one automatically when the rolling 24-hour window is due, or you can trigger one now.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {backups.map((backup) => {
+                  const isRestorable = backup.status === "success";
+                  return (
+                    <div key={backup.id} className="rounded-[22px] border border-border bg-muted/20 p-4">
+                      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-semibold text-foreground">{backup.fileName}</span>
+                            <Badge>{formatBackupKind(backup.kind)}</Badge>
+                            <Badge className={backup.status === "success" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}>
+                              {backup.status}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Created {formatBackupTime(backup.createdAt)} • {formatBackupSize(backup.sizeBytes)} • {backup.triggeredBy}
+                          </p>
+                          {backup.errorMessage ? <p className="text-sm text-destructive">{backup.errorMessage}</p> : null}
+                        </div>
+                        <Button disabled={!isRestorable} variant="secondary" onClick={() => void onRestoreBackup(backup.id)}>
+                          Restore backup
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </Card>
       </div>
     </div>

@@ -2,6 +2,9 @@ import { z } from "zod";
 
 export const entryTypeSchema = z.enum(["income", "expense", "debt_payment"]);
 export const categoryTypeSchema = z.enum(["income", "expense", "both"]);
+export const entrySourceSchema = z.enum(["manual", "catch_up", "seed", "import", "api", "cli", "mcp"]);
+export const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected date in YYYY-MM-DD format.");
+export const hhmmTimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Expected time in HH:MM format.");
 
 export const categorySchema = z.object({
   id: z.string(),
@@ -16,10 +19,10 @@ export const entrySchema = z.object({
   categoryId: z.string().nullable(),
   debtId: z.string().nullable(),
   note: z.string().nullable(),
-  entryDate: z.string(),
+  entryDate: isoDateSchema,
   createdAt: z.string(),
   updatedAt: z.string(),
-  source: z.enum(["manual", "catch_up", "seed", "import", "api", "cli", "mcp"]),
+  source: entrySourceSchema,
   isEstimated: z.boolean(),
 });
 
@@ -37,7 +40,7 @@ export const debtSchema = z.object({
 });
 
 export const checkInSchema = z.object({
-  date: z.string(),
+  date: isoDateSchema,
   completed: z.boolean(),
   completedAt: z.string().nullable(),
   isPartial: z.boolean(),
@@ -104,21 +107,22 @@ export const themeModeSchema = z.enum(["system", "light", "dark"]);
 export const onboardingStateSchema = z.object({
   hasCompletedOnboarding: z.boolean(),
   onboardingCompletedAt: z.string().nullable().optional(),
-  dailyCheckInTime: z.string().nullable(),
+  dailyCheckInTime: hhmmTimeSchema.nullable(),
   remindersEnabled: z.boolean(),
   dailyReviewMode: dailyReviewModeSchema,
+  selectedCategoryIds: z.array(z.string()),
 });
 
 export const userSettingsSchema = z.object({
   defaultView: appViewSchema,
   themeMode: themeModeSchema,
   remindersEnabled: z.boolean(),
-  reminderTime: z.string(),
+  reminderTime: hhmmTimeSchema,
   reminderDays: z.array(z.number().int().min(0).max(6)),
   catchUpReminderEnabled: z.boolean(),
   debtDueReminderEnabled: z.boolean(),
-  quietHoursStart: z.string(),
-  quietHoursEnd: z.string(),
+  quietHoursStart: hhmmTimeSchema,
+  quietHoursEnd: hhmmTimeSchema,
   weekendRemindersEnabled: z.boolean(),
   catchUpPromptMode: catchUpPromptModeSchema,
   showAdvancedOptions: z.boolean(),
@@ -128,6 +132,7 @@ export type Category = z.infer<typeof categorySchema>;
 export type CategoryType = z.infer<typeof categoryTypeSchema>;
 export type Entry = z.infer<typeof entrySchema>;
 export type EntryType = z.infer<typeof entryTypeSchema>;
+export type EntrySource = z.infer<typeof entrySourceSchema>;
 export type Debt = z.infer<typeof debtSchema>;
 export type CheckIn = z.infer<typeof checkInSchema>;
 export type TodaySummary = z.infer<typeof todaySummarySchema>;
@@ -148,10 +153,56 @@ export const entryInputSchema = entrySchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).superRefine((value, ctx) => {
+  if (value.amount <= 0) {
+    ctx.addIssue({ code: "custom", message: "Amount must be greater than zero.", path: ["amount"] });
+  }
+
+  if (value.type === "debt_payment") {
+    if (!value.debtId) {
+      ctx.addIssue({ code: "custom", message: "Debt payment entries must be linked to a debt.", path: ["debtId"] });
+    }
+  } else {
+    if (!value.categoryId) {
+      ctx.addIssue({ code: "custom", message: "Entries must include a category.", path: ["categoryId"] });
+    }
+    if (value.debtId) {
+      ctx.addIssue({ code: "custom", message: "Only debt payment entries may include a debt link.", path: ["debtId"] });
+    }
+  }
 });
 
 export const debtInputSchema = debtSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).superRefine((value, ctx) => {
+  if (value.balanceCurrent < 0) {
+    ctx.addIssue({ code: "custom", message: "Balance cannot be negative.", path: ["balanceCurrent"] });
+  }
+  if (value.interestRate !== null && value.interestRate < 0) {
+    ctx.addIssue({ code: "custom", message: "Interest rate cannot be negative.", path: ["interestRate"] });
+  }
+  if (value.minimumPayment !== null && value.minimumPayment < 0) {
+    ctx.addIssue({ code: "custom", message: "Minimum payment cannot be negative.", path: ["minimumPayment"] });
+  }
 });
+
+export const checkInInputSchema = z.object({
+  date: isoDateSchema,
+  isPartial: z.boolean(),
+  note: z.string().nullable(),
+});
+
+export const onboardingInputSchema = z.object({
+  dailyCheckInTime: hhmmTimeSchema.nullable(),
+  remindersEnabled: z.boolean(),
+  dailyReviewMode: dailyReviewModeSchema.optional(),
+  selectedCategoryIds: z.array(z.string()),
+});
+
+export type EntryInput = z.infer<typeof entryInputSchema>;
+export type DebtInput = z.infer<typeof debtInputSchema> & { id?: string };
+export type CheckInInput = z.infer<typeof checkInInputSchema>;
+export type OnboardingInput = z.infer<typeof onboardingInputSchema>;
+export type UserSettingsInput = z.infer<typeof userSettingsSchema>;

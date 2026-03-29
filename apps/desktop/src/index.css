@@ -4,7 +4,8 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root,
+.app-shell {
   --background: 210 20% 98%;
   --foreground: 222 22% 14%;
   --card: 0 0% 100%;
@@ -27,8 +28,9 @@
   --chart-debt-payment: 187 52% 32%;
   --chart-debt-outstanding: 12 74% 58%;
   --chart-comparison: 215 14% 62%;
-  --shadow-card: 0 18px 40px rgba(38, 60, 84, 0.08);
+  --shadow-panel: 0 18px 40px rgba(38, 60, 84, 0.08);
 
+  color-scheme: light;
   color: hsl(var(--foreground));
   background: hsl(var(--background));
   font-family: "IBM Plex Sans", system-ui, sans-serif;
@@ -40,36 +42,42 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-:root[data-theme="dark"] {
-  --background: 222 22% 10%;
-  --foreground: 210 16% 93%;
-  --card: 222 18% 13%;
-  --card-foreground: 210 16% 93%;
-  --border: 217 14% 24%;
-  --muted: 222 16% 18%;
-  --muted-foreground: 216 12% 68%;
-  --accent: 187 24% 20%;
-  --accent-foreground: 187 72% 84%;
-  --primary: 187 48% 50%;
-  --primary-foreground: 222 22% 10%;
-  --destructive: 4 78% 61%;
+:root[data-theme="dark"],
+.app-shell[data-theme="dark"] {
+  color-scheme: dark;
+  --background: 222 26% 7%;
+  --foreground: 210 14% 88%;
+  --card: 222 22% 10%;
+  --card-foreground: 210 14% 88%;
+  --border: 217 18% 16%;
+  --muted: 222 20% 13%;
+  --muted-foreground: 216 10% 58%;
+  --accent: 187 22% 14%;
+  --accent-foreground: 187 60% 76%;
+  --primary: 187 44% 46%;
+  --primary-foreground: 222 26% 7%;
+  --destructive: 4 72% 56%;
   --destructive-foreground: 0 0% 100%;
-  --success: 152 50% 46%;
+  --success: 152 44% 42%;
   --success-foreground: 0 0% 100%;
-  --warning: 41 92% 56%;
-  --warning-foreground: 28 40% 12%;
-  --chart-income: 152 50% 46%;
-  --chart-spending: 212 52% 56%;
-  --chart-debt-payment: 187 48% 50%;
-  --chart-debt-outstanding: 12 74% 62%;
-  --chart-comparison: 216 12% 68%;
-  --shadow-card: 0 20px 44px rgba(5, 12, 20, 0.34);
+  --warning: 41 85% 52%;
+  --warning-foreground: 41 75% 82%;
+  --chart-income: 152 44% 42%;
+  --chart-spending: 212 48% 52%;
+  --chart-debt-payment: 187 44% 46%;
+  --chart-debt-outstanding: 12 70% 58%;
+  --chart-comparison: 216 10% 48%;
+  --shadow-panel: 0 20px 48px rgba(2, 5, 12, 0.56);
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: #10151d;
+}
+
+.app-shell {
   color: hsl(var(--foreground));
   background:
     radial-gradient(circle at top left, hsl(var(--accent) / 0.78), transparent 34%),
@@ -81,11 +89,10 @@ body {
     background 180ms ease;
 }
 
-:root[data-theme="dark"] body {
+.app-shell[data-theme="dark"] {
   background:
-    radial-gradient(circle at top left, hsl(var(--accent) / 0.82), transparent 34%),
-    radial-gradient(circle at bottom right, hsl(var(--chart-comparison) / 0.24), transparent 30%),
-    linear-gradient(180deg, hsl(222 22% 12%) 0%, hsl(var(--background)) 100%);
+    radial-gradient(circle at top left, hsl(187 28% 12% / 0.70), transparent 32%),
+    hsl(var(--background));
 }
 
 #root {

@@ -43,13 +43,13 @@ const analyticsSummary: AnalyticsSummary = {
 };
 
 describe("AnalyticsScreen", () => {
-  it("renders a mission-first analytics view with focus actions", () => {
+  it("renders a steady-check analytics view with focus actions", () => {
     render(<AnalyticsScreen summary={analyticsSummary} />);
 
-    expect(screen.getByText("Mission Status")).toBeInTheDocument();
+    expect(screen.getByText("Steady Check")).toBeInTheDocument();
     expect(screen.getByText("Cashflow is negative this month, even though debt payments are still happening.")).toBeInTheDocument();
     expect(screen.getByText("What needs attention now")).toBeInTheDocument();
-    expect(screen.getByText("Debt free pace")).toBeInTheDocument();
+    expect(screen.getByText("Debt payoff pace")).toBeInTheDocument();
     expect(screen.getByText("21.3 months")).toBeInTheDocument();
     expect(screen.getByText("Reduce money out or raise money in before accelerating debt payoff.")).toBeInTheDocument();
     expect(screen.getByText("Month vs last month")).toBeInTheDocument();

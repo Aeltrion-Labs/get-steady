@@ -35,7 +35,7 @@ const config: Config = {
         display: ["'Fraunces'", "Georgia", "serif"],
       },
       boxShadow: {
-        card: "var(--shadow-card)",
+        panel: "var(--shadow-panel)",
       },
     },
   },

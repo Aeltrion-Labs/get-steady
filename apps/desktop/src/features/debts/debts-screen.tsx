@@ -31,12 +31,12 @@ export function DebtsScreen({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-5 rounded-[32px] border border-border bg-card/95 p-6 shadow-card lg:grid-cols-[1.3fr,0.9fr]">
+      <div className="grid gap-5 rounded-[32px] border border-border bg-card/95 p-6 shadow-panel lg:grid-cols-[1.3fr,0.9fr]">
         <div className="space-y-4">
           <Badge>Debts</Badge>
-          <h1 className="font-display text-4xl text-foreground">Track balances without pretending complexity helps.</h1>
+          <h1 className="font-display text-4xl text-foreground">Keep debt visible without overbuilding the process.</h1>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-            Keep the current balance honest, record payments, and make the outstanding total visible every day.
+            Keep what you owe current, record payments, and make the total visible enough to stay grounded.
           </p>
           <div className="grid gap-3 sm:grid-cols-2 xl:max-w-[34rem]">
             <div className="rounded-[24px] border border-border/80 bg-muted/50 p-4">
@@ -74,9 +74,9 @@ export function DebtsScreen({
         <Card className="space-y-4">
           <div>
             <Badge className="border-primary/15 bg-accent/60 text-primary">New debt</Badge>
-            <h2 className="mt-3 font-display text-2xl text-foreground">Add a balance you want to keep visible.</h2>
+            <h2 className="mt-3 font-display text-2xl text-foreground">Add debt you want to keep in view.</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Keep the setup compact. You can start with the name and current balance, then fill in lender and due details later.
+              Keep the setup compact. You can start with the name and current amount owed, then fill in lender and due details later.
             </p>
           </div>
           <DebtForm
@@ -104,7 +104,7 @@ export function DebtsScreen({
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-muted-foreground">Current balance</p>
+                <p className="text-sm text-muted-foreground">Current amount owed</p>
                 <p className="text-3xl font-semibold tabular-nums text-foreground">{formatCurrency(debt.balanceCurrent)}</p>
               </div>
             </div>
@@ -149,7 +149,7 @@ export function DebtsScreen({
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-foreground">Record a payment</h3>
-                    <p className="text-sm text-muted-foreground">Capture the movement now so the balance stays honest.</p>
+                    <p className="text-sm text-muted-foreground">Capture the payment now so your debt picture stays useful.</p>
                   </div>
                 </div>
                 <PaymentForm
@@ -189,9 +189,9 @@ export function DebtsScreen({
                 <ShieldAlert className="h-4 w-4" />
               </div>
               <div>
-                <h2 className="font-display text-2xl text-foreground">No debt accounts yet.</h2>
+                <h2 className="font-display text-2xl text-foreground">No debts added yet.</h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Start with the balances that most affect your monthly breathing room. You can add the rest later.
+                  Start with the debts that most affect your monthly breathing room. You can add the rest later.
                 </p>
               </div>
             </div>

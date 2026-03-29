@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { CalendarDay } from "@get-steady/core";
+import type { CalendarDay, CalendarGridCell } from "@get-steady/core";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -12,6 +12,7 @@ type CalendarPayload = {
     missedCount: number;
   };
   days: CalendarDay[];
+  grid: CalendarGridCell[];
 };
 
 function buildMonthLabel(month: string) {
@@ -67,7 +68,7 @@ export function CalendarScreen({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-[32px] border border-border/80 bg-card/95 p-6 shadow-card lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-4 rounded-[32px] border border-border/80 bg-card/95 p-6 shadow-panel lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-3">
           <Badge>Calendar</Badge>
           <h1 className="font-display text-4xl text-foreground">{buildMonthLabel(calendar.month)}</h1>
@@ -196,11 +197,16 @@ export function CalendarScreen({
           ))}
         </div>
         <div className="grid grid-cols-7 gap-2">
-          {calendar.days.map((day) => {
+          {calendar.grid.map((cell) => {
+            if (cell.kind === "spacer") {
+              return <div key={cell.key} aria-hidden="true" className="min-h-[102px] rounded-[22px] border border-transparent" />;
+            }
+
+            const day = cell.day;
             const isActive = day.date === activeDate;
             return (
               <button
-                key={day.date}
+                key={cell.key}
                 className={`min-h-[102px] rounded-[22px] border px-3 py-3 text-left transition ${getDayTone(day, isActive)}`}
                 type="button"
                 aria-label={String(Number(day.date.slice(-2)))}

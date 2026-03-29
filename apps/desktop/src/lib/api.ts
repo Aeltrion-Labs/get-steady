@@ -1,5 +1,17 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Category, CheckIn, Debt, Entry, OnboardingState, UserSettings } from "@get-steady/core";
+import type {
+  Category,
+  CheckIn,
+  CheckInInput as CoreCheckInInput,
+  Debt,
+  DebtInput as CoreDebtInput,
+  Entry,
+  EntryInput as CoreEntryInput,
+  OnboardingInput as CoreOnboardingInput,
+  OnboardingState,
+  UserSettings,
+  UserSettingsInput as CoreUserSettingsInput,
+} from "@get-steady/core";
 
 export type BootstrapPayload = {
   dataPath: string;
@@ -11,30 +23,34 @@ export type BootstrapPayload = {
   checkIns: CheckIn[];
   onboarding: OnboardingState;
   settings: UserSettings;
+  backupSummary: BackupSummary;
+  backups: BackupRecord[];
 };
 
-export type EntryInput = {
-  id?: string;
-  type: "income" | "expense" | "debt_payment";
-  amount: number;
-  categoryId: string | null;
-  debtId: string | null;
-  note: string | null;
-  entryDate: string;
-  source: "manual" | "catch_up" | "seed" | "import" | "api" | "cli" | "mcp";
-  isEstimated: boolean;
+export type BackupRecord = {
+  id: string;
+  kind: "auto" | "manual" | "pre-restore" | string;
+  status: "success" | "failed" | string;
+  filePath: string;
+  fileName: string;
+  createdAt: string;
+  completedAt: string | null;
+  sizeBytes: number | null;
+  errorMessage: string | null;
+  triggeredBy: string;
 };
 
-export type DebtInput = {
-  id?: string;
-  name: string;
-  lender: string | null;
-  balanceCurrent: number;
-  interestRate: number | null;
-  minimumPayment: number | null;
-  dueDay: number | null;
-  isActive: boolean;
+export type BackupSummary = {
+  lastSuccessfulAutomaticBackupAt: string | null;
+  nextAutomaticBackupDueAt: string | null;
+  retentionPolicy: string;
 };
+
+export type EntryInput = CoreEntryInput & { id?: string };
+export type DebtInput = CoreDebtInput;
+export type CheckInInput = CoreCheckInInput;
+export type OnboardingInput = CoreOnboardingInput;
+export type UserSettingsInput = CoreUserSettingsInput;
 
 export type DebtPaymentInput = {
   debtId: string;
@@ -42,21 +58,6 @@ export type DebtPaymentInput = {
   entryDate: string;
   note: string | null;
 };
-
-export type CheckInInput = {
-  date: string;
-  isPartial: boolean;
-  note: string | null;
-};
-
-export type OnboardingInput = {
-  dailyCheckInTime: string | null;
-  remindersEnabled: boolean;
-  dailyReviewMode?: "simple" | "quick";
-  selectedCategoryIds: string[];
-};
-
-export type UserSettingsInput = UserSettings;
 
 export async function bootstrapApp() {
   return invoke<BootstrapPayload>("bootstrap_app");
@@ -104,4 +105,20 @@ export async function exportDebtsCsv(destination: string) {
 
 export async function createBackup(destination: string) {
   return invoke<string>("create_backup_command", { destination });
+}
+
+export async function listBackups() {
+  return invoke<BackupRecord[]>("list_backups_command");
+}
+
+export async function createManualBackup() {
+  return invoke<BackupRecord>("create_manual_backup_command");
+}
+
+export async function runAutomaticBackup() {
+  return invoke<BackupRecord | null>("run_automatic_backup_command");
+}
+
+export async function restoreBackup(backupId: string) {
+  return invoke<void>("restore_backup_command", { backupId });
 }

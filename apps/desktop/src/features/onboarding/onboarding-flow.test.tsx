@@ -18,7 +18,7 @@ describe("OnboardingFlow", () => {
       />,
     );
 
-    expect(screen.getByText("Own your money habit")).toBeInTheDocument();
+    expect(screen.getByText("Get steady with your money")).toBeInTheDocument();
     expect(screen.getByText("Skip for now")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Start setup"));

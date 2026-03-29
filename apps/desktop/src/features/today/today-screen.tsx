@@ -45,7 +45,7 @@ export function TodayScreen({
 }: TodayScreenProps) {
   return (
     <div className="space-y-6">
-      <div className="grid gap-5 rounded-[32px] border border-border bg-card/95 p-6 shadow-card lg:grid-cols-[1.3fr,0.9fr]">
+      <div className="grid gap-5 rounded-[32px] border border-border bg-card/95 p-6 shadow-panel lg:grid-cols-[1.3fr,0.9fr]">
         <div className="space-y-4">
           <Badge>Today</Badge>
           <div className="space-y-3">
@@ -80,7 +80,7 @@ export function TodayScreen({
             <Badge className="border-white/15 bg-white/10 text-slate-200">
               {summary.isTodayCheckedIn ? "Checked in" : "Not checked in"}
             </Badge>
-            <span className="text-xs uppercase tracking-[0.18em] text-slate-400">Daily ritual</span>
+            <span className="text-xs uppercase tracking-[0.18em] text-slate-400">Daily check-in</span>
           </div>
           <div className="space-y-2">
             <p className="text-2xl font-semibold">Close the day while it is still fresh.</p>
@@ -144,7 +144,7 @@ export function TodayScreen({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <Badge>This month</Badge>
-                <h2 className="mt-3 font-display text-2xl text-foreground">Cashflow snapshot</h2>
+                <h2 className="mt-3 font-display text-2xl text-foreground">Monthly picture</h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   Enough context to keep your footing without turning the app into a finance dashboard.
                 </p>

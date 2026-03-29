@@ -111,13 +111,38 @@ describe("buildCalendarMonth", () => {
     });
     expect(calendar.recovery.oldestMissedDate).toBe("2026-03-25");
     expect(calendar.recovery.missedCount).toBe(1);
+    expect(calendar.grid).toHaveLength(35);
+    expect(calendar.grid.length % 7).toBe(0);
+  });
+
+  it("builds leading spacer cells before the first day of months that start midweek", () => {
+    const calendar = buildCalendarMonth({
+      month: "2026-04",
+      today: "2026-04-15",
+      entries: [],
+      checkIns: [],
+      debts: [],
+    });
+
+    expect(calendar.grid.slice(0, 3)).toEqual([
+      { kind: "spacer", key: "leading-0" },
+      { kind: "spacer", key: "leading-1" },
+      { kind: "spacer", key: "leading-2" },
+    ]);
+    expect(calendar.grid[3]).toMatchObject({
+      kind: "day",
+      day: { date: "2026-04-01" },
+    });
+    expect(calendar.grid.length % 7).toBe(0);
   });
 });
 
 describe("evaluateReminderPlan", () => {
   it("schedules daily, catch-up, and debt-due reminders without guilt-driven spam", () => {
     const plan = evaluateReminderPlan({
-      now: "2026-03-27T19:30:00Z",
+      localDate: "2026-03-27",
+      localTime: "19:30",
+      localWeekday: 5,
       today: "2026-03-27",
       settings: {
         remindersEnabled: true,
@@ -171,7 +196,9 @@ describe("evaluateReminderPlan", () => {
 
   it("suppresses reminders during quiet hours and after a recent catch-up nudge", () => {
     const plan = evaluateReminderPlan({
-      now: "2026-03-28T02:00:00Z",
+      localDate: "2026-03-27",
+      localTime: "02:00",
+      localWeekday: 5,
       today: "2026-03-27",
       settings: {
         remindersEnabled: true,
@@ -204,5 +231,34 @@ describe("evaluateReminderPlan", () => {
     expect(plan.dailyCheckIn?.reason).toBe("quiet_hours");
     expect(plan.catchUpGentleNudge?.shouldSend).toBe(false);
     expect(plan.catchUpGentleNudge?.reason).toBe("recently_sent");
+  });
+
+  it("uses local weekday scheduling rather than UTC-derived day boundaries", () => {
+    const plan = evaluateReminderPlan({
+      localDate: "2026-03-29",
+      localTime: "19:05",
+      localWeekday: 0,
+      today: "2026-03-29",
+      settings: {
+        remindersEnabled: true,
+        reminderTime: "19:00",
+        reminderDays: [1, 2, 3, 4, 5],
+        catchUpReminderEnabled: true,
+        debtDueReminderEnabled: true,
+        quietHoursStart: "21:30",
+        quietHoursEnd: "08:00",
+        weekendRemindersEnabled: false,
+      },
+      checkIns: [],
+      debts: [],
+      deliveryHistory: {
+        dailyCheckIn: [],
+        catchUpGentleNudge: [],
+        debtDueSoon: [],
+      },
+    });
+
+    expect(plan.dailyCheckIn?.shouldSend).toBe(false);
+    expect(plan.dailyCheckIn?.reason).toBe("not_scheduled_day");
   });
 });
