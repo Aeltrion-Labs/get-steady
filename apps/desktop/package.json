@@ -1,7 +1,7 @@
 {
   "name": "@get-steady/desktop",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Tauri desktop client for the Get Steady local-first money habit tracker.",
   "license": "MIT",
   "homepage": "https://github.com/Aeltrion-Labs/get-steady/tree/main/apps/desktop",
