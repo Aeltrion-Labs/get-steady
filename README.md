@@ -1,5 +1,7 @@
 # Get Steady
 
+![Get Steady homepage preview](assets/homepage.png)
+
 Get Steady is a local-first desktop app for building a steady daily money habit through
 manual tracking, debt visibility, and simple check-ins.
 
