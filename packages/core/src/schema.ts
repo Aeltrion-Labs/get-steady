@@ -55,7 +55,12 @@ export const todaySummarySchema = z.object({
   isTodayCheckedIn: z.boolean(),
 });
 
-export const missionStatusSchema = z.enum(["on_track", "cashflow_negative", "debt_stalled", "high_risk"]);
+export const missionStatusSchema = z.enum([
+  "on_track",
+  "cashflow_negative",
+  "debt_stalled",
+  "high_risk",
+]);
 export const analyticsDirectionSchema = z.enum(["improving", "flat", "worsening"]);
 
 export const analyticsPeriodSchema = z.object({
@@ -96,7 +101,14 @@ export const analyticsSummarySchema = z.object({
   cashflowSeries: z.array(cashflowSeriesPointSchema),
 });
 
-export const appViewSchema = z.enum(["today", "calendar", "ledger", "debts", "analytics", "settings"]);
+export const appViewSchema = z.enum([
+  "today",
+  "calendar",
+  "ledger",
+  "debts",
+  "analytics",
+  "settings",
+]);
 export const catchUpPromptModeSchema = z.enum(["always", "when_missed", "hidden"]);
 export const dailyReviewModeSchema = z.enum(["simple", "quick"]);
 export const themeModeSchema = z.enum(["system", "light", "dark"]);

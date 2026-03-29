@@ -1,4 +1,5 @@
 # PRD: Local-First Daily Money Habit Tracker
+
 **Status:** Draft  
 **Type:** Product Requirements Document  
 **Platform:** Cross-platform desktop app  
@@ -14,6 +15,7 @@ This product is a local-first desktop app designed to help people build a daily 
 It is not a traditional budgeting app and does not aim to automate finances through bank connections. Instead, it emphasizes daily awareness, personal accountability, and progress through consistent check-ins. Users manually log money in and money out, review how they are tracking, and stay engaged without subscriptions, cloud dependency, or vendor lock-in.
 
 This product is intended as an alternative for people who:
+
 - want a free option
 - prefer full ownership of their data
 - believe manual entry creates stronger financial awareness
@@ -26,12 +28,14 @@ This product is intended as an alternative for people who:
 Many finance apps optimize for automation, aggregation, and passive reporting. While convenient, this often causes users to disengage from the actual habit of paying attention to their spending. When awareness drops, behavior often follows.
 
 Other apps that emphasize manual tracking and debt progress provide real value, but some users still face barriers such as:
+
 - recurring subscription cost
 - dependence on cloud sync or accounts
 - limited data portability
 - lack of extensibility for local workflows, power users, and AI tools
 
 There is room for a local-first alternative that focuses on:
+
 - daily financial awareness
 - low-friction manual entry
 - debt and cashflow visibility
@@ -50,9 +54,11 @@ Build a thoughtful, habit-forming desktop app that helps users improve their fin
 ## 4. Positioning
 
 ### Core Positioning
+
 A free, local-first desktop app for building a daily money habit through manual entry, debt tracking, and cashflow awareness.
 
 ### Key Differentiators
+
 - **Local-first by default**  
   No required account, no cloud dependency, no vendor lock-in.
 
@@ -69,6 +75,7 @@ A free, local-first desktop app for building a daily money habit through manual 
   Encourages consistency and recovery without turning personal finance into a gimmick.
 
 ### Positioning Guardrails
+
 - Do not frame the product as a clone of existing manual finance apps.
 - Do not use "freedom" terminology in product language.
 - Do not attack paid alternatives. Position this as a complementary option for users with different needs and priorities.
@@ -78,6 +85,7 @@ A free, local-first desktop app for building a daily money habit through manual 
 ## 5. Goals
 
 ### Primary Goals
+
 1. Help users build a daily check-in habit around spending and cashflow.
 2. Make manual entry fast enough to sustain over time.
 3. Provide clear visibility into money in, money out, and debt progress.
@@ -86,6 +94,7 @@ A free, local-first desktop app for building a daily money habit through manual 
 6. Provide clean extensibility through CLI, API, and MCP.
 
 ### Secondary Goals
+
 1. Create a polished, motivating desktop experience.
 2. Support easy export to common formats such as CSV and XLSX.
 3. Allow users to recover easily after missing several days.
@@ -96,6 +105,7 @@ A free, local-first desktop app for building a daily money habit through manual 
 ## 6. Non-Goals
 
 The following are explicitly out of scope for the initial product vision:
+
 - automatic bank aggregation
 - credit score monitoring
 - investment portfolio management
@@ -110,9 +120,11 @@ The following are explicitly out of scope for the initial product vision:
 ## 7. Target Users
 
 ### Primary User
+
 An individual who wants to improve their financial behavior through consistent awareness and manual tracking, especially around debt payoff and spending control.
 
 ### Example User Traits
+
 - overwhelmed by traditional budgeting apps
 - distrustful of bank-linked finance tools
 - price-sensitive
@@ -122,7 +134,9 @@ An individual who wants to improve their financial behavior through consistent a
 - may be technical or privacy-conscious, but product should also work for non-technical users
 
 ### Secondary User
+
 A power user who wants:
+
 - CLI access
 - scripting
 - local API integration
@@ -156,6 +170,7 @@ A power user who wants:
 ## 9. Core Use Cases
 
 ### Daily Use Cases
+
 - Log today's expenses and income
 - Review today's total money out
 - Review monthly trend
@@ -164,6 +179,7 @@ A power user who wants:
 - Get a gentle reminder to check in
 
 ### Weekly / Monthly Use Cases
+
 - Catch up after missing a few days
 - Review where money went this week
 - Review debt reduction progress
@@ -171,6 +187,7 @@ A power user who wants:
 - Review recurring bills and upcoming obligations
 
 ### Power User Use Cases
+
 - Add entries via CLI
 - Query current balances from a local API
 - Use AI tools to summarize patterns
@@ -184,9 +201,11 @@ A power user who wants:
 ## 10.1 MVP Features
 
 ### A. Daily Check-In
+
 The main home experience should revolve around a daily check-in flow.
 
 **Requirements:**
+
 - Show current date and check-in status
 - Allow quick entry of expenses and income
 - Allow amount, category, optional note, date, and account/debt target selection
@@ -195,9 +214,11 @@ The main home experience should revolve around a daily check-in flow.
 - Show simple daily totals
 
 ### B. Transaction Logging
+
 Users can manually create and edit financial entries.
 
 **Requirements:**
+
 - expense and income entry types
 - categories
 - optional tags
@@ -208,9 +229,11 @@ Users can manually create and edit financial entries.
 - recurring entry templates
 
 ### C. Debt Tracking
+
 Users can define debts and log payments against them.
 
 **Requirements:**
+
 - create debt accounts
 - store current balance, interest rate, minimum payment, optional due date
 - log debt payments
@@ -218,9 +241,11 @@ Users can define debts and log payments against them.
 - estimate payoff progress based on user-entered data
 
 ### D. Cashflow Visibility
+
 Users should see practical summaries, not complicated budget systems.
 
 **Requirements:**
+
 - monthly money in
 - monthly money out
 - net margin
@@ -229,9 +254,11 @@ Users should see practical summaries, not complicated budget systems.
 - streak / consistency summary
 
 ### E. Catch-Up Mode
+
 Users must be able to recover from gaps without friction or shame.
 
 **Requirements:**
+
 - detect missed check-in days
 - offer catch-up workflow for missing dates
 - allow quick-copy of recurring items
@@ -239,9 +266,11 @@ Users must be able to recover from gaps without friction or shame.
 - let users skip and come back later
 
 ### F. Local Data Ownership
+
 All product data should live locally.
 
 **Requirements:**
+
 - SQLite database as primary store
 - local backups
 - restore from backup
@@ -249,9 +278,11 @@ All product data should live locally.
 - no account required
 
 ### G. Export
+
 Users should be able to leave with clean data at any time.
 
 **Requirements:**
+
 - export transactions to CSV
 - export debt/account summaries to CSV
 - export workbook-style XLSX
@@ -259,9 +290,11 @@ Users should be able to leave with clean data at any time.
 - allow date range filtering for export
 
 ### H. Notifications
+
 Support the habit through simple reminders.
 
 **Requirements:**
+
 - local desktop reminders
 - configurable reminder time
 - reminders can be disabled
@@ -272,9 +305,11 @@ Support the habit through simple reminders.
 ## 10.2 Post-MVP Features
 
 ### A. Lightweight Gamification
+
 Designed to support consistency without becoming distracting.
 
 **Candidate features:**
+
 - streaks with grace days
 - weekly completion badge
 - comeback badge after missed days
@@ -283,12 +318,14 @@ Designed to support consistency without becoming distracting.
 - "clean week" or "fully logged week" recognition
 
 ### B. Native Convenience
+
 - tray icon quick add
 - global shortcut to open entry modal
 - small desktop widget or mini-summary mode
 - launch at startup option
 
 ### C. AI-Native Capabilities
+
 - natural language transaction entry
 - weekly summary generation
 - category pattern explanation
@@ -296,6 +333,7 @@ Designed to support consistency without becoming distracting.
 - plain-language questions over local data
 
 ### D. MCP / CLI / Local API
+
 - full CRUD for entries, debts, categories
 - reporting endpoints
 - scenario runner
@@ -303,6 +341,7 @@ Designed to support consistency without becoming distracting.
 - schema documentation for external tools
 
 ### E. Shared or Household Mode
+
 Potential later feature for multiple profiles or households on one local install.
 
 ---
@@ -310,6 +349,7 @@ Potential later feature for multiple profiles or households on one local install
 ## 11. Experience Design
 
 ## 11.1 UX Goals
+
 - Make daily use take less than two minutes
 - Keep the home screen focused on today
 - Reduce clutter and configuration fatigue
@@ -319,9 +359,11 @@ Potential later feature for multiple profiles or households on one local install
 ## 11.2 Proposed Core Screens
 
 ### 1. Home / Today
+
 Purpose: anchor the daily habit
 
 **Contents:**
+
 - today's date
 - check-in status
 - quick add expense/income
@@ -332,27 +374,33 @@ Purpose: anchor the daily habit
 - reminder of missed days if applicable
 
 ### 2. Activity / Ledger
+
 Purpose: view, filter, edit, and search entries
 
 **Contents:**
+
 - list of entries
 - filters by date/category/type
 - edit/delete actions
 - bulk export
 
 ### 3. Debts
+
 Purpose: define and track obligations
 
 **Contents:**
+
 - debt account cards
 - payment history
 - progress trends
 - scenario estimator
 
 ### 4. Trends
+
 Purpose: understand where money is going
 
 **Contents:**
+
 - monthly net margin
 - spending by category
 - debt payment totals
@@ -360,9 +408,11 @@ Purpose: understand where money is going
 - rolling 7-day / 30-day views
 
 ### 5. Catch-Up Flow
+
 Purpose: recover from missed days
 
 **Contents:**
+
 - missing dates list
 - quick add for each day
 - apply recurring items
@@ -370,9 +420,11 @@ Purpose: recover from missed days
 - continue later
 
 ### 6. Settings
+
 Purpose: keep control local and transparent
 
 **Contents:**
+
 - reminders
 - theme
 - export
@@ -386,6 +438,7 @@ Purpose: keep control local and transparent
 ## 12. Functional Requirements
 
 ## 12.1 Data Entry
+
 - User can create income or expense entries.
 - User can assign category and optional notes.
 - User can select entry date.
@@ -393,29 +446,34 @@ Purpose: keep control local and transparent
 - User can create templates for repeated entries.
 
 ## 12.2 Debt Management
+
 - User can create multiple debt records.
 - User can store starting and current balances.
 - User can log payments against a debt.
 - User can see balance history and payoff estimates.
 
 ## 12.3 Daily Habit Support
+
 - App can determine whether a day has been checked in.
 - App can remind the user to check in.
 - App can detect missing days and offer catch-up mode.
 
 ## 12.4 Reporting
+
 - App can show daily, weekly, and monthly summaries.
 - App can calculate net cashflow for date ranges.
 - App can display spending by category.
 - App can summarize debt payments and current balances.
 
 ## 12.5 Export and Portability
+
 - App can export CSV and XLSX files.
 - App can back up and restore the SQLite database.
 - App should make data location visible to the user.
 - App should support simple migration to another machine.
 
 ## 12.6 Extensibility
+
 - App functionality should be exposed through:
   - GUI
   - CLI
@@ -428,26 +486,31 @@ Purpose: keep control local and transparent
 ## 13. Non-Functional Requirements
 
 ### Performance
+
 - App launches quickly on consumer laptops
 - Core actions should feel instant
 - Database reads/writes should be efficient for single-user local usage
 
 ### Reliability
+
 - Must work fully offline
 - Data loss risk should be minimized with backup options
 - Database corruption handling and recovery guidance should exist
 
 ### Portability
+
 - Should run cross-platform on macOS, Windows, and Linux
 - User data should be easy to move between machines
 
 ### Privacy
+
 - No required telemetry
 - No required account
 - No cloud upload by default
 - Any optional telemetry, if ever added, must be opt-in and transparent
 
 ### Accessibility
+
 - Keyboard navigation supported
 - Legible typography and contrast
 - No critical interactions hidden behind hover-only affordances
@@ -457,15 +520,18 @@ Purpose: keep control local and transparent
 ## 14. Technical Direction
 
 ## 14.1 Platform
+
 Cross-platform desktop app.
 
 **Recommended stack direction:**
+
 - **Tauri** for desktop shell
 - **React + TypeScript** for UI
 - **SQLite** for local storage
 - optional Rust for native integrations where appropriate
 
 ## 14.2 Architecture Principles
+
 - local-first
 - offline-first
 - modular services
@@ -474,9 +540,11 @@ Cross-platform desktop app.
 - consistent surface area between GUI, CLI, and API
 
 ## 14.3 Data Storage
+
 Primary store: SQLite
 
 **Why:**
+
 - fast
 - local
 - portable
@@ -485,6 +553,7 @@ Primary store: SQLite
 - friendly for export and scripting
 
 ## 14.4 Interfaces
+
 - Desktop GUI
 - CLI for add/list/report/export
 - local HTTP or IPC API
@@ -497,6 +566,7 @@ Primary store: SQLite
 ## 15.1 Entities
 
 ### UserPreferences
+
 - id
 - currency
 - locale
@@ -506,6 +576,7 @@ Primary store: SQLite
 - streak_settings
 
 ### Entry
+
 - id
 - type (income | expense | debt_payment | transfer)
 - amount
@@ -519,12 +590,14 @@ Primary store: SQLite
 - is_estimated
 
 ### Category
+
 - id
 - name
 - type (income | expense | both)
 - color/icon metadata optional
 
 ### Debt
+
 - id
 - name
 - lender
@@ -537,6 +610,7 @@ Primary store: SQLite
 - is_active
 
 ### DebtPayment
+
 - id
 - debt_id
 - entry_id
@@ -545,6 +619,7 @@ Primary store: SQLite
 - payment_date
 
 ### RecurringTemplate
+
 - id
 - name
 - type
@@ -556,6 +631,7 @@ Primary store: SQLite
 - enabled
 
 ### CheckInStatus
+
 - date
 - completed
 - completed_at
@@ -564,6 +640,7 @@ Primary store: SQLite
 - is_partial
 
 ### BackupRecord
+
 - id
 - created_at
 - file_path
@@ -576,6 +653,7 @@ Primary store: SQLite
 As an open-source project, success should be measured more by habit usefulness and product quality than revenue.
 
 ### User Outcome Metrics
+
 - daily check-in adherence rate
 - percentage of users who return after missing multiple days
 - average number of days logged per month
@@ -583,6 +661,7 @@ As an open-source project, success should be measured more by habit usefulness a
 - number of debt accounts actively tracked
 
 ### Product Quality Metrics
+
 - time to log a typical day
 - export success rate
 - app startup time
@@ -590,6 +669,7 @@ As an open-source project, success should be measured more by habit usefulness a
 - catch-up completion rate
 
 ### Community / Open Source Metrics
+
 - GitHub stars and contributors
 - issues resolved
 - plugin or integration ecosystem growth
@@ -600,22 +680,27 @@ As an open-source project, success should be measured more by habit usefulness a
 ## 17. Risks and Mitigations
 
 ### Risk: Manual entry fatigue
+
 **Mitigation:**  
 Fast entry flows, templates, tray quick add, keyboard shortcuts, catch-up mode.
 
 ### Risk: Users compare it to full budgeting apps and feel features are missing
+
 **Mitigation:**  
 Strong positioning and onboarding. Emphasize daily money habit and debt/cashflow awareness.
 
 ### Risk: Local-only setup feels intimidating to non-technical users
+
 **Mitigation:**  
 Installer-based onboarding, friendly defaults, visible backups, guided export/import.
 
 ### Risk: Open source project grows scope too fast
+
 **Mitigation:**  
 Strict MVP boundaries and modular architecture.
 
 ### Risk: Gamification feels gimmicky
+
 **Mitigation:**  
 Keep it subtle, optional, and focused on consistency/recovery rather than reward theater.
 
@@ -624,6 +709,7 @@ Keep it subtle, optional, and focused on consistency/recovery rather than reward
 ## 18. MVP Scope Recommendation
 
 ### Must Have
+
 - desktop shell
 - SQLite persistence
 - daily check-in flow
@@ -638,6 +724,7 @@ Keep it subtle, optional, and focused on consistency/recovery rather than reward
 - reminder notifications
 
 ### Nice to Have
+
 - XLSX export
 - recurring templates
 - streaks with grace days
@@ -645,6 +732,7 @@ Keep it subtle, optional, and focused on consistency/recovery rather than reward
 - CLI
 
 ### Later
+
 - local API
 - MCP server
 - natural language entry
@@ -657,6 +745,7 @@ Keep it subtle, optional, and focused on consistency/recovery rather than reward
 ## 19. Roadmap Proposal
 
 ### Phase 1: Weekend Ship
+
 - Tauri shell
 - Today screen
 - entry CRUD
@@ -666,6 +755,7 @@ Keep it subtle, optional, and focused on consistency/recovery rather than reward
 - CSV export
 
 ### Phase 2: Habit Polish
+
 - reminders
 - catch-up mode
 - recurring templates
@@ -673,12 +763,14 @@ Keep it subtle, optional, and focused on consistency/recovery rather than reward
 - better charts and summaries
 
 ### Phase 3: Power User Layer
+
 - CLI
 - local API
 - robust export formats
 - schema docs
 
 ### Phase 4: AI-Native Layer
+
 - MCP server
 - natural language input
 - queryable analytics
@@ -701,9 +793,11 @@ Keep it subtle, optional, and focused on consistency/recovery rather than reward
 ## 21. Draft Messaging
 
 ### Working Product Description
+
 A free, local-first desktop app that helps you build a daily money habit through manual tracking, debt progress visibility, and simple cashflow awareness.
 
 ### Messaging Themes
+
 - Own your data
 - No subscription
 - Manual by design
@@ -712,6 +806,7 @@ A free, local-first desktop app that helps you build a daily money habit through
 - Built for consistency, not perfection
 
 ### Sample Taglines
+
 - **Own your money habit**
 - **Track it daily. Keep it local.**
 - **A calmer way to stay on top of money in and money out**

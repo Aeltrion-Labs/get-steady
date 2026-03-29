@@ -11,12 +11,8 @@
     "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {
-      "@get-steady/core": [
-        "packages/core/src/index.ts"
-      ],
-      "@get-steady/ui": [
-        "packages/ui/src/index.ts"
-      ]
+      "@get-steady/core": ["packages/core/src/index.ts"],
+      "@get-steady/ui": ["packages/ui/src/index.ts"]
     }
   }
 }

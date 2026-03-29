@@ -10,7 +10,16 @@ import {
   type ThemeMode,
 } from "@get-steady/core";
 import { save } from "@tauri-apps/plugin-dialog";
-import { ArrowDownCircle, BookOpenText, CalendarDays, ChartColumnIncreasing, CircleDollarSign, Dot, House, Settings2 } from "lucide-react";
+import {
+  ArrowDownCircle,
+  BookOpenText,
+  CalendarDays,
+  ChartColumnIncreasing,
+  CircleDollarSign,
+  Dot,
+  House,
+  Settings2,
+} from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { Badge } from "./components/ui/badge";
 import { Button } from "./components/ui/button";
@@ -51,32 +60,38 @@ const VIEW_META: Record<AppView, { eyebrow: string; title: string; description: 
   today: {
     eyebrow: "Daily habit",
     title: "Today stays at the center.",
-    description: "Log the money movement that matters, then close the loop before tomorrow asks for your attention.",
+    description:
+      "Log the money movement that matters, then close the loop before tomorrow asks for your attention.",
   },
   calendar: {
     eyebrow: "Recovery view",
     title: "Catch up without shame.",
-    description: "Use the month view to spot missed days quickly and move them back into the habit rhythm.",
+    description:
+      "Use the month view to spot missed days quickly and move them back into the habit rhythm.",
   },
   ledger: {
     eyebrow: "Entry history",
     title: "Review the trail cleanly.",
-    description: "See what came in, what went out, and keep the record honest without overcomplicating the workflow.",
+    description:
+      "See what came in, what went out, and keep the record honest without overcomplicating the workflow.",
   },
   debts: {
     eyebrow: "Debt focus",
     title: "Make balances visible.",
-    description: "Keep your debt picture current so cashflow decisions are grounded in what is still owed.",
+    description:
+      "Keep your debt picture current so cashflow decisions are grounded in what is still owed.",
   },
   analytics: {
     eyebrow: "Mission view",
     title: "See whether the habit is working.",
-    description: "Use the analytics view to judge progress toward debt freedom and cashflow stability without falling into dashboard sprawl.",
+    description:
+      "Use the analytics view to judge progress toward debt freedom and cashflow stability without falling into dashboard sprawl.",
   },
   settings: {
     eyebrow: "Control center",
     title: "Keep the app under your control.",
-    description: "Adjust reminders, exports, and local-first preferences without cluttering the daily workflow.",
+    description:
+      "Adjust reminders, exports, and local-first preferences without cluttering the daily workflow.",
   },
 };
 
@@ -192,7 +207,7 @@ function AppInner() {
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const syncTheme = (event?: MediaQueryListEvent) => {
-      setSystemTheme(event?.matches ?? mediaQuery.matches ? "dark" : "light");
+      setSystemTheme((event?.matches ?? mediaQuery.matches) ? "dark" : "light");
     };
 
     syncTheme();
@@ -227,8 +242,12 @@ function AppInner() {
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-xl rounded-[32px] border border-destructive/20 bg-card p-10 shadow-card">
           <Badge>Error</Badge>
-          <h1 className="mt-4 font-display text-3xl text-foreground">The app could not finish booting.</h1>
-          <p className="mt-3 text-sm text-muted-foreground">{String(bootstrapQuery.error ?? "Unknown bootstrap failure.")}</p>
+          <h1 className="mt-4 font-display text-3xl text-foreground">
+            The app could not finish booting.
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {String(bootstrapQuery.error ?? "Unknown bootstrap failure.")}
+          </p>
           <Button className="mt-6" onClick={() => void bootstrapQuery.refetch()}>
             Retry bootstrap
           </Button>
@@ -302,7 +321,9 @@ function AppInner() {
     data.settings.catchUpPromptMode === "always" ||
     (data.settings.catchUpPromptMode === "when_missed" && missedDates.length > 0);
   const activeViewMeta = VIEW_META[currentView];
-  const topStatusLabel = reminderPlan.dailyCheckIn?.shouldSend ? "Reminder eligible now" : "Calm local reminders";
+  const topStatusLabel = reminderPlan.dailyCheckIn?.shouldSend
+    ? "Reminder eligible now"
+    : "Calm local reminders";
 
   async function chooseDestination(defaultPath: string) {
     const selected = await save({ defaultPath });
@@ -324,7 +345,9 @@ function AppInner() {
   }
 
   async function handleBackup() {
-    const destination = await chooseDestination(`${data.backupDirectory}\\steady-backup-${today}.sqlite`);
+    const destination = await chooseDestination(
+      `${data.backupDirectory}\\steady-backup-${today}.sqlite`,
+    );
     if (!destination) return;
     await createBackup(destination);
     toast.success("Backup created.");
@@ -336,14 +359,19 @@ function AppInner() {
         <aside className="flex flex-col rounded-[36px] border border-border bg-card/90 p-6 shadow-card">
           <div className="rounded-[28px] border border-border/80 bg-gradient-to-br from-slate-950 via-slate-900 to-primary px-5 py-5 text-white">
             <Badge className="border-white/15 bg-white/10 text-slate-200">Get Steady</Badge>
-            <h1 className="mt-4 font-display text-4xl leading-tight text-white">A calmer daily money habit.</h1>
+            <h1 className="mt-4 font-display text-4xl leading-tight text-white">
+              A calmer daily money habit.
+            </h1>
             <p className="mt-3 text-sm leading-6 text-slate-200">
-              Local-first, manual by design, and built to make a daily check-in feel brief instead of burdensome.
+              Local-first, manual by design, and built to make a daily check-in feel brief instead
+              of burdensome.
             </p>
           </div>
 
           <div className="mt-8">
-            <p className="mb-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">Navigation</p>
+            <p className="mb-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Navigation
+            </p>
             <div className="space-y-2">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
@@ -375,7 +403,9 @@ function AppInner() {
               <CircleDollarSign className="h-10 w-10 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Net margin</p>
-                <p className="text-2xl font-semibold tabular-nums text-foreground">{formatCurrency(summary.monthNetMargin)}</p>
+                <p className="text-2xl font-semibold tabular-nums text-foreground">
+                  {formatCurrency(summary.monthNetMargin)}
+                </p>
               </div>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
@@ -386,22 +416,30 @@ function AppInner() {
           </div>
 
           <div className="mt-4 rounded-[28px] border border-border/80 bg-muted/45 p-4">
-            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Current posture</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+              Current posture
+            </p>
             <div className="mt-3 space-y-3">
               <div className="flex items-center justify-between rounded-[20px] bg-card/75 px-3 py-3">
                 <span className="text-sm text-muted-foreground">Missed days</span>
-                <span className="font-semibold tabular-nums text-foreground">{missedDates.length}</span>
+                <span className="font-semibold tabular-nums text-foreground">
+                  {missedDates.length}
+                </span>
               </div>
               <div className="flex items-center justify-between rounded-[20px] bg-card/75 px-3 py-3">
                 <span className="text-sm text-muted-foreground">Debt outstanding</span>
-                <span className="font-semibold tabular-nums text-foreground">{formatCurrency(summary.debtOutstanding)}</span>
+                <span className="font-semibold tabular-nums text-foreground">
+                  {formatCurrency(summary.debtOutstanding)}
+                </span>
               </div>
             </div>
           </div>
 
           <div className="mt-auto pt-6">
             <div className="rounded-[24px] border border-border/80 bg-accent/45 px-4 py-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-primary/80">{topStatusLabel}</p>
+              <p className="text-xs uppercase tracking-[0.16em] text-primary/80">
+                {topStatusLabel}
+              </p>
               <p className="mt-2 text-sm leading-6 text-foreground">
                 {reminderPlan.dailyCheckIn?.shouldSend
                   ? "If you were relying on reminders, today would be a good moment for one."
@@ -415,9 +453,15 @@ function AppInner() {
           <div className="rounded-[30px] border border-border bg-card/85 px-5 py-4 shadow-card">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{activeViewMeta.eyebrow}</p>
-                <h2 className="mt-2 font-display text-3xl text-foreground">{activeViewMeta.title}</h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{activeViewMeta.description}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  {activeViewMeta.eyebrow}
+                </p>
+                <h2 className="mt-2 font-display text-3xl text-foreground">
+                  {activeViewMeta.title}
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                  {activeViewMeta.description}
+                </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[560px] xl:grid-cols-4">
                 <div className="rounded-[22px] border border-border/80 bg-card/80 px-4 py-3">
@@ -425,12 +469,20 @@ function AppInner() {
                   <p className="mt-2 text-sm font-semibold text-foreground">{today}</p>
                 </div>
                 <div className="rounded-[22px] border border-border/80 bg-card/80 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Check-in</p>
-                  <p className="mt-2 text-sm font-semibold text-foreground">{summary.isTodayCheckedIn ? "Closed out" : "Open"}</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                    Check-in
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-foreground">
+                    {summary.isTodayCheckedIn ? "Closed out" : "Open"}
+                  </p>
                 </div>
                 <div className="rounded-[22px] border border-border/80 bg-card/80 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Reminder time</p>
-                  <p className="mt-2 text-sm font-semibold text-foreground">{data.settings.reminderTime}</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                    Reminder time
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-foreground">
+                    {data.settings.reminderTime}
+                  </p>
                 </div>
                 <div className="rounded-[22px] border border-border/80 bg-card/80 px-4 py-3">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Theme</p>
@@ -456,10 +508,18 @@ function AppInner() {
               }}
               onSelectEntryDate={(date) => setSelectedEntryDate(date)}
               onMarkTodayComplete={async () => {
-                await markCheckInMutation.mutateAsync({ date: today, isPartial: false, note: null });
+                await markCheckInMutation.mutateAsync({
+                  date: today,
+                  isPartial: false,
+                  note: null,
+                });
               }}
               onMarkDatePartial={async (date) => {
-                await markCheckInMutation.mutateAsync({ date, isPartial: true, note: "Catch-up partial." });
+                await markCheckInMutation.mutateAsync({
+                  date,
+                  isPartial: true,
+                  note: "Catch-up partial.",
+                });
               }}
             />
           ) : null}
@@ -480,7 +540,11 @@ function AppInner() {
                 setCurrentView("today");
               }}
               onMarkPartial={async (date) => {
-                await markCheckInMutation.mutateAsync({ date, isPartial: true, note: "Catch-up partial." });
+                await markCheckInMutation.mutateAsync({
+                  date,
+                  isPartial: true,
+                  note: "Catch-up partial.",
+                });
               }}
             />
           ) : null}

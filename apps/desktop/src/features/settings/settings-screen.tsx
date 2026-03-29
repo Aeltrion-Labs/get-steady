@@ -44,7 +44,8 @@ export function SettingsScreen({
           <Badge>Settings</Badge>
           <h1 className="mt-3 font-display text-4xl text-foreground">Local, visible, portable.</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Tune habit support, keep your data portable, and make the app feel calmer to return to each day.
+            Tune habit support, keep your data portable, and make the app feel calmer to return to
+            each day.
           </p>
         </div>
         <Card className="border-primary/10 bg-slate-950 text-slate-50 shadow-[0_20px_48px_rgba(23,34,46,0.24)]">
@@ -52,15 +53,21 @@ export function SettingsScreen({
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             <div>
               <p className="text-sm text-slate-300">Ownership</p>
-              <p className="mt-1 text-sm leading-6 text-white">Exports and backups stay explicit and visible.</p>
+              <p className="mt-1 text-sm leading-6 text-white">
+                Exports and backups stay explicit and visible.
+              </p>
             </div>
             <div>
               <p className="text-sm text-slate-300">Reminder style</p>
-              <p className="mt-1 text-sm leading-6 text-white">Reminders should nudge, not scold.</p>
+              <p className="mt-1 text-sm leading-6 text-white">
+                Reminders should nudge, not scold.
+              </p>
             </div>
             <div>
               <p className="text-sm text-slate-300">Boundaries</p>
-              <p className="mt-1 text-sm leading-6 text-white">Developer integrations remain outside this user-facing area.</p>
+              <p className="mt-1 text-sm leading-6 text-white">
+                Developer integrations remain outside this user-facing area.
+              </p>
             </div>
           </div>
         </Card>
@@ -70,7 +77,10 @@ export function SettingsScreen({
         <Card className="space-y-4">
           <div className="space-y-2">
             <h2 className="font-display text-2xl text-foreground">Habit support</h2>
-            <p className="text-sm text-muted-foreground">These controls should reduce friction and support recovery, not create maintenance work.</p>
+            <p className="text-sm text-muted-foreground">
+              These controls should reduce friction and support recovery, not create maintenance
+              work.
+            </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex items-center gap-3 rounded-[22px] border border-border bg-muted/35 px-4 py-4 text-sm">
@@ -93,7 +103,9 @@ export function SettingsScreen({
                 id="reminder-time"
                 type="time"
                 value={draft.reminderTime}
-                onChange={(event) => setDraft((current) => ({ ...current, reminderTime: event.target.value }))}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, reminderTime: event.target.value }))
+                }
                 onBlur={() => void persist(draft)}
               />
             </div>
@@ -195,11 +207,16 @@ export function SettingsScreen({
         <Card className="space-y-4">
           <div className="space-y-2">
             <h2 className="font-display text-2xl text-foreground">Storage</h2>
-            <p className="text-sm text-muted-foreground">Your local database path stays visible because ownership should feel concrete.</p>
+            <p className="text-sm text-muted-foreground">
+              Your local database path stays visible because ownership should feel concrete.
+            </p>
           </div>
-          <code className="rounded-[22px] border border-border bg-muted/35 px-4 py-4 text-sm text-foreground">{dataPath}</code>
+          <code className="rounded-[22px] border border-border bg-muted/35 px-4 py-4 text-sm text-foreground">
+            {dataPath}
+          </code>
           <p className="text-xs text-muted-foreground">
-            Developer settings and integrations remain intentionally separate from this user-facing settings area.
+            Developer settings and integrations remain intentionally separate from this user-facing
+            settings area.
           </p>
         </Card>
       </div>
@@ -208,26 +225,38 @@ export function SettingsScreen({
         <Card className="space-y-4">
           <div className="space-y-2">
             <h2 className="font-display text-2xl text-foreground">Export</h2>
-            <p className="text-sm text-muted-foreground">Take readable copies of your data whenever you want.</p>
+            <p className="text-sm text-muted-foreground">
+              Take readable copies of your data whenever you want.
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">Default export directory: {exportDirectory}</p>
+          <p className="text-sm text-muted-foreground">
+            Default export directory: {exportDirectory}
+          </p>
           <div className="flex flex-wrap gap-3">
             <Button onClick={() => void onExportEntries()}>Export entries CSV</Button>
             <Button variant="secondary" onClick={() => void onExportDebts()}>
               Export debts CSV
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">XLSX is intentionally deferred for the first slice.</p>
+          <p className="text-xs text-muted-foreground">
+            XLSX is intentionally deferred for the first slice.
+          </p>
         </Card>
 
         <Card className="space-y-4">
           <div className="space-y-2">
             <h2 className="font-display text-2xl text-foreground">Backups</h2>
-            <p className="text-sm text-muted-foreground">Quiet safety rails matter more than clever automation.</p>
+            <p className="text-sm text-muted-foreground">
+              Quiet safety rails matter more than clever automation.
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">Default backup directory: {backupDirectory}</p>
+          <p className="text-sm text-muted-foreground">
+            Default backup directory: {backupDirectory}
+          </p>
           <Button onClick={() => void onBackup()}>Create database backup</Button>
-          <p className="text-xs text-muted-foreground">Restore/import UI remains deferred while the habit loop is being strengthened.</p>
+          <p className="text-xs text-muted-foreground">
+            Restore/import UI remains deferred while the habit loop is being strengthened.
+          </p>
         </Card>
       </div>
     </div>

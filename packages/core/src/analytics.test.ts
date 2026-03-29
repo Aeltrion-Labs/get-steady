@@ -224,7 +224,9 @@ describe("calculateAnalyticsSummary", () => {
 
     expect(summary.missionStatus).toBe("cashflow_negative");
     expect(summary.primaryMessage).toContain("Cashflow is negative");
-    expect(summary.focusItems[0]).toBe("Reduce money out or raise money in before accelerating debt payoff.");
+    expect(summary.focusItems[0]).toBe(
+      "Reduce money out or raise money in before accelerating debt payoff.",
+    );
     expect(summary.estimatedMonthsToDebtFree).toBe(21.33);
     expect(summary.hasDataConfidenceWarning).toBe(false);
   });

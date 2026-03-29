@@ -1,7 +1,7 @@
 use crate::models::{
-    BootstrapPayload, CategoryRecord, CheckInInput, CheckInRecord, DebtInput, DebtPaymentInput, DebtRecord,
-    EntryFilters, EntryInput, EntryRecord, OnboardingInput, OnboardingStateRecord, UserSettingsInput,
-    UserSettingsRecord,
+    BootstrapPayload, CategoryRecord, CheckInInput, CheckInRecord, DebtInput, DebtPaymentInput,
+    DebtRecord, EntryFilters, EntryInput, EntryRecord, OnboardingInput, OnboardingStateRecord,
+    UserSettingsInput, UserSettingsRecord,
 };
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension, ToSql};
 use std::fs;
@@ -30,10 +30,13 @@ pub fn open_connection(app: &AppHandle) -> Result<(Connection, AppPaths), String
     let db_path = data_dir.join("steady.sqlite");
 
     fs::create_dir_all(&data_dir).map_err(|error| format!("failed to create data dir: {error}"))?;
-    fs::create_dir_all(&backup_dir).map_err(|error| format!("failed to create backup dir: {error}"))?;
-    fs::create_dir_all(&export_dir).map_err(|error| format!("failed to create export dir: {error}"))?;
+    fs::create_dir_all(&backup_dir)
+        .map_err(|error| format!("failed to create backup dir: {error}"))?;
+    fs::create_dir_all(&export_dir)
+        .map_err(|error| format!("failed to create export dir: {error}"))?;
 
-    let connection = Connection::open(&db_path).map_err(|error| format!("failed to open database: {error}"))?;
+    let connection =
+        Connection::open(&db_path).map_err(|error| format!("failed to open database: {error}"))?;
     connection
         .pragma_update(None, "foreign_keys", true)
         .map_err(|error| format!("failed to enable foreign keys: {error}"))?;
@@ -251,7 +254,8 @@ fn table_has_column(connection: &Connection, table: &str, column: &str) -> Resul
         .map_err(|error| format!("failed to query table info for {table}: {error}"))?;
 
     for row in rows {
-        if row.map_err(|error| format!("failed to read table info for {table}: {error}"))? == column {
+        if row.map_err(|error| format!("failed to read table info for {table}: {error}"))? == column
+        {
             return Ok(true);
         }
     }
@@ -285,9 +289,13 @@ fn repair_legacy_money_columns(connection: &Connection) -> Result<(), String> {
             );
             ",
         )
-        .map_err(|error| format!("failed to ensure user settings table during legacy repair: {error}"))?;
+        .map_err(|error| {
+            format!("failed to ensure user settings table during legacy repair: {error}")
+        })?;
 
-    if table_has_column(connection, "entries", "amount_cents")? && !table_has_column(connection, "entries", "amount")? {
+    if table_has_column(connection, "entries", "amount_cents")?
+        && !table_has_column(connection, "entries", "amount")?
+    {
         connection
             .execute_batch(
                 "
@@ -300,7 +308,9 @@ fn repair_legacy_money_columns(connection: &Connection) -> Result<(), String> {
             .map_err(|error| format!("failed to migrate entry amounts: {error}"))?;
     }
 
-    if table_has_column(connection, "debts", "starting_balance_cents")? && !table_has_column(connection, "debts", "balance_current")? {
+    if table_has_column(connection, "debts", "starting_balance_cents")?
+        && !table_has_column(connection, "debts", "balance_current")?
+    {
         connection
             .execute_batch(
                 "
@@ -326,7 +336,9 @@ fn repair_legacy_money_columns(connection: &Connection) -> Result<(), String> {
             .map_err(|error| format!("failed to migrate debt balances: {error}"))?;
     }
 
-    if table_has_column(connection, "debts", "interest_rate_bps")? && !table_has_column(connection, "debts", "interest_rate")? {
+    if table_has_column(connection, "debts", "interest_rate_bps")?
+        && !table_has_column(connection, "debts", "interest_rate")?
+    {
         connection
             .execute_batch(
                 "
@@ -339,7 +351,9 @@ fn repair_legacy_money_columns(connection: &Connection) -> Result<(), String> {
             .map_err(|error| format!("failed to migrate debt interest rates: {error}"))?;
     }
 
-    if table_has_column(connection, "debts", "minimum_payment_cents")? && !table_has_column(connection, "debts", "minimum_payment")? {
+    if table_has_column(connection, "debts", "minimum_payment_cents")?
+        && !table_has_column(connection, "debts", "minimum_payment")?
+    {
         connection
             .execute_batch(
                 "
@@ -502,7 +516,10 @@ fn list_categories(connection: &Connection) -> Result<Vec<CategoryRecord>, Strin
         .map_err(|error| format!("failed to map categories: {error}"))
 }
 
-pub fn list_entries(connection: &Connection, filters: Option<EntryFilters>) -> Result<Vec<EntryRecord>, String> {
+pub fn list_entries(
+    connection: &Connection,
+    filters: Option<EntryFilters>,
+) -> Result<Vec<EntryRecord>, String> {
     let mut sql = String::from(
         "SELECT id, type, amount, category_id, debt_id, note, entry_date, created_at, updated_at, source, is_estimated FROM entries",
     );
@@ -612,7 +629,10 @@ pub fn bootstrap(app: &AppHandle) -> Result<BootstrapPayload, String> {
     })
 }
 
-pub fn save_onboarding(app: &AppHandle, input: OnboardingInput) -> Result<OnboardingStateRecord, String> {
+pub fn save_onboarding(
+    app: &AppHandle,
+    input: OnboardingInput,
+) -> Result<OnboardingStateRecord, String> {
     let (connection, _) = open_connection(app)?;
     connection
         .execute(
@@ -631,7 +651,9 @@ pub fn save_onboarding(app: &AppHandle, input: OnboardingInput) -> Result<Onboar
                 now(),
                 input.daily_check_in_time,
                 if input.reminders_enabled { 1 } else { 0 },
-                input.daily_review_mode.unwrap_or_else(|| "simple".to_string()),
+                input
+                    .daily_review_mode
+                    .unwrap_or_else(|| "simple".to_string()),
             ],
         )
         .map_err(|error| format!("failed to save onboarding: {error}"))?;
@@ -641,7 +663,10 @@ pub fn save_onboarding(app: &AppHandle, input: OnboardingInput) -> Result<Onboar
     get_onboarding(&connection)
 }
 
-pub fn save_settings(app: &AppHandle, input: UserSettingsInput) -> Result<UserSettingsRecord, String> {
+pub fn save_settings(
+    app: &AppHandle,
+    input: UserSettingsInput,
+) -> Result<UserSettingsRecord, String> {
     let (connection, _) = open_connection(app)?;
     connection
         .execute(
@@ -668,11 +693,23 @@ pub fn save_settings(app: &AppHandle, input: UserSettingsInput) -> Result<UserSe
                 if input.reminders_enabled { 1 } else { 0 },
                 input.reminder_time,
                 serialize_reminder_days(&input.reminder_days),
-                if input.catch_up_reminder_enabled { 1 } else { 0 },
-                if input.debt_due_reminder_enabled { 1 } else { 0 },
+                if input.catch_up_reminder_enabled {
+                    1
+                } else {
+                    0
+                },
+                if input.debt_due_reminder_enabled {
+                    1
+                } else {
+                    0
+                },
                 input.quiet_hours_start,
                 input.quiet_hours_end,
-                if input.weekend_reminders_enabled { 1 } else { 0 },
+                if input.weekend_reminders_enabled {
+                    1
+                } else {
+                    0
+                },
                 input.catch_up_prompt_mode,
                 if input.show_advanced_options { 1 } else { 0 },
                 now(),
@@ -797,7 +834,11 @@ pub fn delete_entry(app: &AppHandle, entry_id: String) -> Result<(), String> {
     Ok(())
 }
 
-fn adjust_debt_balance(transaction: &rusqlite::Transaction<'_>, debt_id: &str, delta: f64) -> Result<(), String> {
+fn adjust_debt_balance(
+    transaction: &rusqlite::Transaction<'_>,
+    debt_id: &str,
+    delta: f64,
+) -> Result<(), String> {
     let current_balance: f64 = transaction
         .query_row(
             "SELECT balance_current FROM debts WHERE id = ?1",
@@ -881,7 +922,10 @@ pub fn delete_debt(app: &AppHandle, debt_id: String) -> Result<(), String> {
     Ok(())
 }
 
-pub fn record_debt_payment(app: &AppHandle, input: DebtPaymentInput) -> Result<EntryRecord, String> {
+pub fn record_debt_payment(
+    app: &AppHandle,
+    input: DebtPaymentInput,
+) -> Result<EntryRecord, String> {
     save_entry(
         app,
         EntryInput {
@@ -971,9 +1015,15 @@ pub fn export_debts_csv(app: &AppHandle, destination: &str) -> Result<String, St
             csv_value(&debt.name),
             csv_optional(debt.lender.as_deref()),
             debt.balance_current,
-            debt.interest_rate.map(|value| value.to_string()).unwrap_or_default(),
-            debt.minimum_payment.map(|value| format!("{value:.2}")).unwrap_or_default(),
-            debt.due_day.map(|value| value.to_string()).unwrap_or_default(),
+            debt.interest_rate
+                .map(|value| value.to_string())
+                .unwrap_or_default(),
+            debt.minimum_payment
+                .map(|value| format!("{value:.2}"))
+                .unwrap_or_default(),
+            debt.due_day
+                .map(|value| value.to_string())
+                .unwrap_or_default(),
             if debt.is_active { "Yes" } else { "No" },
             csv_value(&debt.created_at),
             csv_value(&debt.updated_at),
@@ -988,10 +1038,12 @@ pub fn create_backup(app: &AppHandle, destination: &str) -> Result<String, Strin
     let (connection, _) = open_connection(app)?;
     let path = PathBuf::from(destination);
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).map_err(|error| format!("failed to prepare backup directory: {error}"))?;
+        fs::create_dir_all(parent)
+            .map_err(|error| format!("failed to prepare backup directory: {error}"))?;
     }
     if path.exists() {
-        fs::remove_file(&path).map_err(|error| format!("failed to replace backup file: {error}"))?;
+        fs::remove_file(&path)
+            .map_err(|error| format!("failed to replace backup file: {error}"))?;
     }
 
     connection
@@ -1004,7 +1056,8 @@ pub fn create_backup(app: &AppHandle, destination: &str) -> Result<String, Strin
 fn write_text_file(destination: &str, contents: &str) -> Result<(), String> {
     let path = Path::new(destination);
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).map_err(|error| format!("failed to prepare export directory: {error}"))?;
+        fs::create_dir_all(parent)
+            .map_err(|error| format!("failed to prepare export directory: {error}"))?;
     }
 
     fs::write(path, contents).map_err(|error| format!("failed to write file: {error}"))
@@ -1085,7 +1138,11 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM user_settings", [], |row| row.get(0))
             .expect("user settings count");
         let version: i64 = connection
-            .query_row("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1", [], |row| row.get(0))
+            .query_row(
+                "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1",
+                [],
+                |row| row.get(0),
+            )
             .expect("schema version");
 
         assert_eq!(settings_count, 1);
@@ -1166,7 +1223,11 @@ mod tests {
         let entries = list_entries(&connection, None).expect("entries list");
         let debts = list_debts(&connection).expect("debts list");
         let version: i64 = connection
-            .query_row("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1", [], |row| row.get(0))
+            .query_row(
+                "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1",
+                [],
+                |row| row.get(0),
+            )
             .expect("schema version");
 
         assert_eq!(version, 5);
@@ -1263,10 +1324,18 @@ mod tests {
         run_migrations(&connection).expect("migration success");
 
         let theme_mode: String = connection
-            .query_row("SELECT theme_mode FROM user_settings WHERE id = 1", [], |row| row.get(0))
+            .query_row(
+                "SELECT theme_mode FROM user_settings WHERE id = 1",
+                [],
+                |row| row.get(0),
+            )
             .expect("theme mode");
         let version: i64 = connection
-            .query_row("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1", [], |row| row.get(0))
+            .query_row(
+                "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1",
+                [],
+                |row| row.get(0),
+            )
             .expect("schema version");
 
         assert_eq!(theme_mode, "system");

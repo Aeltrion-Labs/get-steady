@@ -47,11 +47,17 @@ describe("AnalyticsScreen", () => {
     render(<AnalyticsScreen summary={analyticsSummary} />);
 
     expect(screen.getByText("Mission Status")).toBeInTheDocument();
-    expect(screen.getByText("Cashflow is negative this month, even though debt payments are still happening.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Cashflow is negative this month, even though debt payments are still happening.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText("What needs attention now")).toBeInTheDocument();
     expect(screen.getByText("Debt free pace")).toBeInTheDocument();
     expect(screen.getByText("21.3 months")).toBeInTheDocument();
-    expect(screen.getByText("Reduce money out or raise money in before accelerating debt payoff.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Reduce money out or raise money in before accelerating debt payoff."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Month vs last month")).toBeInTheDocument();
   });
 });

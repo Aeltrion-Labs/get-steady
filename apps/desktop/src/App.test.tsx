@@ -52,7 +52,10 @@ function installMatchMedia(initialMatches: boolean): MatchMediaController {
   return {
     emit(nextMatches: boolean) {
       matches = nextMatches;
-      const event = { matches: nextMatches, media: "(prefers-color-scheme: dark)" } as MediaQueryListEvent;
+      const event = {
+        matches: nextMatches,
+        media: "(prefers-color-scheme: dark)",
+      } as MediaQueryListEvent;
       listeners.forEach((listener) => listener(event));
     },
   };

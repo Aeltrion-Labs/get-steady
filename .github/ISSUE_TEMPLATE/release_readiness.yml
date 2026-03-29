@@ -1,0 +1,21 @@
+name: Release readiness
+description: Track public-launch prep or pre-release checks.
+title: "[Release]: "
+labels:
+  - release
+body:
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Launch checklist
+      options:
+        - label: README and contributor docs are current
+        - label: License and security policy are present
+        - label: CI, CodeQL, and security workflows are green
+        - label: "`pnpm check` passes locally"
+        - label: Known limitations are documented honestly
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Track blockers, deferred work, or manual release steps.

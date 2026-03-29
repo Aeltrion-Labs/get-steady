@@ -70,7 +70,9 @@ export function buildCalendarMonth(input: {
       net: normalizeMoney(moneyIn - moneyOut),
       hasEntries: dayEntries.length > 0,
       hasDebtPayment: dayEntries.some((entry) => entry.type === "debt_payment"),
-      hasDueMarker: input.debts.some((debt) => debt.isActive && debt.dueDay !== null && isDueSoonMarker(date, debt.dueDay)),
+      hasDueMarker: input.debts.some(
+        (debt) => debt.isActive && debt.dueDay !== null && isDueSoonMarker(date, debt.dueDay),
+      ),
     };
   });
 
@@ -79,13 +81,18 @@ export function buildCalendarMonth(input: {
       return false;
     }
     const firstTrackedDate = input.checkIns
-      .filter((checkIn) => (checkIn.completed || checkIn.isPartial) && checkIn.date.startsWith(input.month))
+      .filter(
+        (checkIn) =>
+          (checkIn.completed || checkIn.isPartial) && checkIn.date.startsWith(input.month),
+      )
       .sort((left, right) => compareIsoDates(left.date, right.date))
       .at(0)?.date;
     if (!firstTrackedDate) {
       return compareIsoDates(day.date, input.today) < 0;
     }
-    return compareIsoDates(day.date, firstTrackedDate) > 0 && compareIsoDates(day.date, input.today) < 0;
+    return (
+      compareIsoDates(day.date, firstTrackedDate) > 0 && compareIsoDates(day.date, input.today) < 0
+    );
   });
 
   return {
@@ -143,7 +150,11 @@ function evaluateDailyCheckIn(input: {
   if (!hasReachedReminderTime(input.now, input.settings.reminderTime)) {
     return { shouldSend: false, reason: "too_early" };
   }
-  if (input.checkIns.some((checkIn) => checkIn.date === input.today && (checkIn.completed || checkIn.isPartial))) {
+  if (
+    input.checkIns.some(
+      (checkIn) => checkIn.date === input.today && (checkIn.completed || checkIn.isPartial),
+    )
+  ) {
     return { shouldSend: false, reason: "already_checked_in" };
   }
   if (input.deliveryHistory.dailyCheckIn.some((timestamp) => timestamp.startsWith(input.today))) {
@@ -226,7 +237,9 @@ function evaluateDebtDue(
   if (differenceInDays(input.today, dueDate) !== 3) {
     return { shouldSend: false, reason: "not_due_soon" };
   }
-  const alreadySent = input.deliveryHistory.debtDueSoon.some((timestamp) => timestamp.startsWith(input.today));
+  const alreadySent = input.deliveryHistory.debtDueSoon.some((timestamp) =>
+    timestamp.startsWith(input.today),
+  );
   if (alreadySent) {
     return { shouldSend: false, reason: "already_sent_today" };
   }
@@ -255,7 +268,9 @@ function isWithinQuietHours(now: string, settings: ReminderSettings) {
 }
 
 function isDueSoonMarker(date: string, dueDay: number) {
-  const markerDay = isoDate(new Date(Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, dueDay)));
+  const markerDay = isoDate(
+    new Date(Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, dueDay)),
+  );
   return date === markerDay;
 }
 

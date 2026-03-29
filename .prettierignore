@@ -3,5 +3,5 @@ node_modules/
 coverage/
 apps/desktop/dist/
 apps/desktop/src-tauri/target/
-dist/
-.DS_Store
+pnpm-lock.yaml
+apps/desktop/src-tauri/Cargo.lock

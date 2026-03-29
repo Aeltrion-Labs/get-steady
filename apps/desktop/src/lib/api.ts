@@ -1,5 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Category, CheckIn, Debt, Entry, OnboardingState, UserSettings } from "@get-steady/core";
+import type {
+  Category,
+  CheckIn,
+  Debt,
+  Entry,
+  OnboardingState,
+  UserSettings,
+} from "@get-steady/core";
 
 export type BootstrapPayload = {
   dataPath: string;

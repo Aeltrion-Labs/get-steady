@@ -55,12 +55,16 @@ export function LedgerScreen({
       <div className="flex flex-col gap-4 rounded-[32px] border border-border bg-card/90 p-6 shadow-card lg:flex-row lg:items-end lg:justify-between">
         <div>
           <Badge>Ledger</Badge>
-          <h1 className="mt-3 font-display text-4xl text-foreground">Every entry stays editable.</h1>
+          <h1 className="mt-3 font-display text-4xl text-foreground">
+            Every entry stays editable.
+          </h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
             Backdate it, fix it, or delete it. Manual tracking only works if correction is easy.
           </p>
         </div>
-        <Button onClick={() => setShowCreateForm((current) => !current)}>{showCreateForm ? "Close form" : "Add entry"}</Button>
+        <Button onClick={() => setShowCreateForm((current) => !current)}>
+          {showCreateForm ? "Close form" : "Add entry"}
+        </Button>
       </div>
 
       {showCreateForm ? (
@@ -86,7 +90,9 @@ export function LedgerScreen({
             <Select
               id="ledger-type"
               value={filters.type}
-              onChange={(event) => setFilters((current) => ({ ...current, type: event.target.value }))}
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, type: event.target.value }))
+              }
             >
               <option value="all">All types</option>
               <option value="expense">Expense</option>
@@ -99,7 +105,9 @@ export function LedgerScreen({
             <Select
               id="ledger-category"
               value={filters.categoryId}
-              onChange={(event) => setFilters((current) => ({ ...current, categoryId: event.target.value }))}
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, categoryId: event.target.value }))
+              }
             >
               <option value="">All categories</option>
               {categories.map((category) => (
@@ -115,7 +123,9 @@ export function LedgerScreen({
               id="ledger-start"
               type="date"
               value={filters.startDate}
-              onChange={(event) => setFilters((current) => ({ ...current, startDate: event.target.value }))}
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, startDate: event.target.value }))
+              }
             />
           </div>
           <div>
@@ -124,7 +134,9 @@ export function LedgerScreen({
               id="ledger-end"
               type="date"
               value={filters.endDate}
-              onChange={(event) => setFilters((current) => ({ ...current, endDate: event.target.value }))}
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, endDate: event.target.value }))
+              }
             />
           </div>
         </div>
@@ -137,7 +149,9 @@ export function LedgerScreen({
               <div>
                 <div className="flex flex-wrap items-center gap-3">
                   <Badge>{entry.type.replace("_", " ")}</Badge>
-                  <h2 className="text-lg font-semibold text-foreground">{formatCurrency(entry.amount)}</h2>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {formatCurrency(entry.amount)}
+                  </h2>
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {formatShortDate(entry.entryDate)}

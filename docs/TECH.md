@@ -25,32 +25,27 @@ For agent access, MCP fits your “AI-native but local” goal. MCP is an open s
 ### 2. Core architecture principles
 
 1. **Local-first, offline-first**
-
-   * The app must work fully offline.
-   * Local SQLite file is the source of truth.
-   * No cloud account, no forced sync, no server dependency.
+   - The app must work fully offline.
+   - Local SQLite file is the source of truth.
+   - No cloud account, no forced sync, no server dependency.
 
 2. **Habit-first**
-
-   * Architecture should optimize for fast daily check-ins, catch-up flows, and low-friction editing.
-   * The product is not a giant finance suite.
+   - Architecture should optimize for fast daily check-ins, catch-up flows, and low-friction editing.
+   - The product is not a giant finance suite.
 
 3. **One domain, many surfaces**
-
-   * GUI, CLI, local API, and MCP should all use the same domain services.
-   * No duplicate business logic hiding in different entry points.
+   - GUI, CLI, local API, and MCP should all use the same domain services.
+   - No duplicate business logic hiding in different entry points.
 
 4. **Portable by design**
-
-   * User data lives in a clearly visible app-data folder.
-   * Backup, restore, export, and migration are product features, not afterthoughts.
+   - User data lives in a clearly visible app-data folder.
+   - Backup, restore, export, and migration are product features, not afterthoughts.
 
 5. **Security by default**
-
-   * Minimal permissions.
-   * No shell access unless explicitly needed.
-   * Local API off by default.
-   * MCP server opt-in.
+   - Minimal permissions.
+   - No shell access unless explicitly needed.
+   - Local API off by default.
+   - MCP server opt-in.
 
 ---
 
@@ -100,13 +95,13 @@ Pure business rules. No Tauri, no React, no storage details.
 
 Owns:
 
-* entry rules
-* category rules
-* debt calculations
-* consistency tracking
-* catch-up flow logic
-* summary/trend calculations
-* payoff simulation logic
+- entry rules
+- category rules
+- debt calculations
+- consistency tracking
+- catch-up flow logic
+- summary/trend calculations
+- payoff simulation logic
 
 This layer should be test-heavy and boring in the best way. The money brain lives here.
 
@@ -116,14 +111,14 @@ Use-case orchestrators.
 
 Examples:
 
-* `logExpense`
-* `logIncome`
-* `completeCheckIn`
-* `runCatchUp`
-* `recordDebtPayment`
-* `generateMonthlySummary`
-* `exportWorkbook`
-* `simulateExtraPayment`
+- `logExpense`
+- `logIncome`
+- `completeCheckIn`
+- `runCatchUp`
+- `recordDebtPayment`
+- `generateMonthlySummary`
+- `exportWorkbook`
+- `simulateExtraPayment`
 
 These call repositories and domain rules.
 
@@ -135,11 +130,11 @@ Implements repositories, migrations, backup, restore, and transaction boundaries
 
 Tauri-facing code:
 
-* notifications
-* tray actions
-* file system access
-* startup behavior
-* native dialogs
+- notifications
+- tray actions
+- file system access
+- startup behavior
+- native dialogs
 
 #### E. `interfaces/gui`
 
@@ -149,11 +144,11 @@ React application.
 
 Commands like:
 
-* `money add expense`
-* `money add income`
-* `money summary month`
-* `money debt list`
-* `money export xlsx`
+- `money add expense`
+- `money add income`
+- `money summary month`
+- `money debt list`
+- `money export xlsx`
 
 Tauri has an official CLI plugin for app-level command parsing, but I would treat the CLI as a secondary interface, not the primary runtime spine. ([Tauri][4])
 
@@ -161,9 +156,9 @@ Tauri has an official CLI plugin for app-level command parsing, but I would trea
 
 Optional loopback-only local API for automation and extensions.
 
-* Bind to `127.0.0.1` only
-* Disabled by default
-* Token-based local auth
+- Bind to `127.0.0.1` only
+- Disabled by default
+- Token-based local auth
 
 #### H. `interfaces/mcp`
 
@@ -183,14 +178,14 @@ Secondary runtime, started only when enabled.
 
 **Phase 1:** `stdio` transport only
 
-* Best for local agent tooling
-* Simpler and safer
-* No exposed port required
+- Best for local agent tooling
+- Simpler and safer
+- No exposed port required
 
 **Phase 2:** optional Streamable HTTP on localhost
 
-* Useful for richer local toolchains or multiple local clients
-* Still off by default
+- Useful for richer local toolchains or multiple local clients
+- Still off by default
 
 That matches the MCP spec’s defined transports and the recommendation that clients support `stdio` whenever possible. ([Model Context Protocol][5])
 
@@ -210,11 +205,11 @@ SQLite is well suited to this because it is commonly used as the on-disk format 
 
 #### Suggested SQLite settings
 
-* `journal_mode = WAL` for better read/write concurrency during normal app use
-* `foreign_keys = ON`
-* `busy_timeout` configured
-* migrations version table
-* `application_id` and `user_version` set
+- `journal_mode = WAL` for better read/write concurrency during normal app use
+- `foreign_keys = ON`
+- `busy_timeout` configured
+- migrations version table
+- `application_id` and `user_version` set
 
 SQLite documents that WAL mode writes changes to a separate write-ahead log and later checkpoints them back into the database; it is commonly used to improve concurrent access patterns. ([SQLite][6])
 
@@ -222,8 +217,8 @@ SQLite documents that WAL mode writes changes to a separate write-ahead log and 
 
 Support both:
 
-* **Quick backup:** SQLite backup API
-* **Clean compact export backup:** `VACUUM INTO`
+- **Quick backup:** SQLite backup API
+- **Clean compact export backup:** `VACUUM INTO`
 
 SQLite’s backup API is intended for copying a live database, while `VACUUM INTO` creates a compact copy and purges deleted content from the backup. ([SQLite][7])
 
@@ -231,11 +226,11 @@ SQLite’s backup API is intended for copying a live database, while `VACUUM INT
 
 Export from domain views, not raw tables:
 
-* `transactions.csv`
-* `debts.csv`
-* `monthly_summary.csv`
-* `yearly_summary.xlsx`
-* optional `journal.csv` for check-in history
+- `transactions.csv`
+- `debts.csv`
+- `monthly_summary.csv`
+- `yearly_summary.xlsx`
+- optional `journal.csv` for check-in history
 
 That keeps your schema flexible while preserving stable exports.
 
@@ -247,37 +242,37 @@ You already have the PRD model. I’d formalize it into these table groups:
 
 #### Core tables
 
-* `entries`
-* `categories`
-* `debts`
-* `debt_payments`
-* `check_ins`
-* `recurring_templates`
+- `entries`
+- `categories`
+- `debts`
+- `debt_payments`
+- `check_ins`
+- `recurring_templates`
 
 #### Derived/config tables
 
-* `user_preferences`
-* `notification_settings`
-* `export_profiles`
-* `app_metadata`
-* `backup_records`
+- `user_preferences`
+- `notification_settings`
+- `export_profiles`
+- `app_metadata`
+- `backup_records`
 
 #### Optional future tables
 
-* `goals`
-* `milestones`
-* `streak_events`
-* `audit_log`
-* `api_tokens`
-* `mcp_permissions`
+- `goals`
+- `milestones`
+- `streak_events`
+- `audit_log`
+- `api_tokens`
+- `mcp_permissions`
 
 #### Important design choice
 
 Use an **append-friendly financial model**:
 
-* entries are facts
-* summaries are computed
-* avoid storing too many mutable aggregates
+- entries are facts
+- summaries are computed
+- avoid storing too many mutable aggregates
 
 That will make exports, debugging, and recovery much saner.
 
@@ -289,27 +284,27 @@ Use a **single-window app** first, with modal overlays and tray quick-add.
 
 #### Primary screens
 
-* Today
-* Ledger
-* Debts
-* Trends
-* Catch-up
-* Settings
+- Today
+- Ledger
+- Debts
+- Trends
+- Catch-up
+- Settings
 
 #### UI state rules
 
-* Server state from TanStack Query
-* Ephemeral UI state in Zustand
-* Forms with React Hook Form + Zod
-* Charts and summaries fed from read models, not raw query stitching in components
+- Server state from TanStack Query
+- Ephemeral UI state in Zustand
+- Forms with React Hook Form + Zod
+- Charts and summaries fed from read models, not raw query stitching in components
 
 #### Key UX feature
 
 Build a **Quick Add overlay** that can be opened from:
 
-* main UI button
-* tray action
-* keyboard shortcut
+- main UI button
+- tray action
+- keyboard shortcut
 
 That feature will carry a lot of the daily habit weight.
 
@@ -321,22 +316,22 @@ Use Tauri plugins sparingly and intentionally.
 
 #### Likely plugins
 
-* SQL / SQLite
-* Notification
-* File system
-* Store for tiny app config if needed
-* Autostart later
-* Tray / menu
-* Updater later
+- SQL / SQLite
+- Notification
+- File system
+- Store for tiny app config if needed
+- Autostart later
+- Tray / menu
+- Updater later
 
 Tauri’s docs provide official support for SQL, notifications, file-system access, tray behavior, updater flows, and a plugin/capability system for controlling exposure to the frontend. ([Tauri][8])
 
 #### Security posture
 
-* Use capabilities per window
-* Keep dangerous commands blocked unless explicitly granted
-* Restrict file access to app data, export folder, and user-chosen paths
-* Avoid broad shell permissions
+- Use capabilities per window
+- Keep dangerous commands blocked unless explicitly granted
+- Restrict file access to app data, export folder, and user-chosen paths
+- Avoid broad shell permissions
 
 Tauri v2’s permissions and capabilities system is specifically built to grant or deny command exposure to windows/webviews, and filesystem access is blocked by default until allowed through capabilities. Shell access also has scoped restrictions. ([Tauri][9])
 
@@ -350,10 +345,10 @@ This is where your idea gets its extra sauce.
 
 Purpose:
 
-* power-user entry
-* scripting
-* cron-style exports
-* testability
+- power-user entry
+- scripting
+- cron-style exports
+- testability
 
 Examples:
 
@@ -368,48 +363,48 @@ app export xlsx --range this-month
 
 Purpose:
 
-* desktop widgets
-* automation
-* optional local dashboards
-* future plugin ecosystem
+- desktop widgets
+- automation
+- optional local dashboards
+- future plugin ecosystem
 
 Rules:
 
-* localhost only
-* disabled by default
-* token required
-* rate limited
-* read-only mode option
+- localhost only
+- disabled by default
+- token required
+- rate limited
+- read-only mode option
 
 #### MCP
 
 Purpose:
 
-* let coding agents and assistants query plans, trends, categories, debts, and simulations
-* let agents help the user reason over their money habit without owning the data
+- let coding agents and assistants query plans, trends, categories, debts, and simulations
+- let agents help the user reason over their money habit without owning the data
 
 **Tool examples**
 
-* `entries.add`
-* `entries.list`
-* `debts.list`
-* `debts.simulate_payment`
-* `checkins.status`
-* `summaries.monthly`
-* `exports.generate`
+- `entries.add`
+- `entries.list`
+- `debts.list`
+- `debts.simulate_payment`
+- `checkins.status`
+- `summaries.monthly`
+- `exports.generate`
 
 **Resource examples**
 
-* current month summary
-* debt accounts snapshot
-* spending by category
-* check-in history
+- current month summary
+- debt accounts snapshot
+- spending by category
+- check-in history
 
 **Guardrails**
 
-* writes require explicit enablement
-* default MCP mode is read-only
-* user can revoke tool categories individually
+- writes require explicit enablement
+- default MCP mode is read-only
+- user can revoke tool categories individually
 
 ---
 
@@ -419,10 +414,10 @@ Keep both as optional modules, not deep hard-coded assumptions.
 
 #### Notification engine
 
-* local scheduler
-* morning or evening reminder
-* “you missed yesterday” reminder
-* weekly review reminder
+- local scheduler
+- morning or evening reminder
+- “you missed yesterday” reminder
+- weekly review reminder
 
 Tauri’s notification plugin supports notifications from both JavaScript and Rust. ([Tauri][10])
 
@@ -430,17 +425,17 @@ Tauri’s notification plugin supports notifications from both JavaScript and Ru
 
 Model as rules + events:
 
-* streak started
-* streak maintained
-* grace day used
-* catch-up recovery completed
-* debt milestone reached
+- streak started
+- streak maintained
+- grace day used
+- catch-up recovery completed
+- debt milestone reached
 
 Then the UI decides how to render it:
 
-* badge
-* subtle animation
-* summary card
+- badge
+- subtle animation
+- summary card
 
 This keeps gamification lightweight and removable instead of turning into glitter glue on the domain model.
 
@@ -463,19 +458,19 @@ This part is part of the product, not just ops.
 
 #### User-facing actions
 
-* reveal data folder
-* create backup
-* restore backup
-* export CSV/XLSX
-* import prior export
-* move data file
+- reveal data folder
+- create backup
+- restore backup
+- export CSV/XLSX
+- import prior export
+- move data file
 
 #### Migration path
 
 A user should be able to move to a new machine by copying:
 
-* `app.db`
-* or a backup bundle
+- `app.db`
+- or a backup bundle
 
 Because SQLite is a compact single-file cross-platform format, this portability story is very natural. ([SQLite][11])
 
@@ -499,10 +494,10 @@ Because SQLite is a compact single-file cross-platform format, this portability 
 
 #### CI/CD
 
-* GitHub Actions
-* build matrix for Windows, macOS, Linux
-* signed releases for Windows and macOS when ready
-* attach installer artifacts to GitHub Releases
+- GitHub Actions
+- build matrix for Windows, macOS, Linux
+- signed releases for Windows and macOS when ready
+- attach installer artifacts to GitHub Releases
 
 Tauri documents GitHub-based build and release flows and supports an updater that can work with either a dynamic server or a static JSON file. ([Tauri][12])
 
@@ -510,10 +505,10 @@ Tauri documents GitHub-based build and release flows and supports an updater tha
 
 For a local-first privacy-focused app:
 
-* auto-update **off by default**
-* manual check or opt-in updater
-* release notes visible
-* portable builds available too
+- auto-update **off by default**
+- manual check or opt-in updater
+- release notes visible
+- portable builds available too
 
 ---
 
@@ -521,53 +516,53 @@ For a local-first privacy-focused app:
 
 #### Phase 0: foundation
 
-* Tauri shell
-* React app scaffold
-* SQLite connection + migrations
-* core domain package
-* Today screen skeleton
+- Tauri shell
+- React app scaffold
+- SQLite connection + migrations
+- core domain package
+- Today screen skeleton
 
 #### Phase 1: weekend MVP
 
-* manual entry CRUD
-* categories
-* debt CRUD
-* debt payment logging
-* daily check-in
-* monthly summary
-* CSV export
-* local notifications
+- manual entry CRUD
+- categories
+- debt CRUD
+- debt payment logging
+- daily check-in
+- monthly summary
+- CSV export
+- local notifications
 
 #### Phase 2: product polish
 
-* catch-up mode
-* recurring templates
-* tray quick-add
-* keyboard shortcut
-* better summaries/charts
-* backup/restore UI
-* XLSX export
+- catch-up mode
+- recurring templates
+- tray quick-add
+- keyboard shortcut
+- better summaries/charts
+- backup/restore UI
+- XLSX export
 
 #### Phase 3: power-user layer
 
-* CLI
-* read-only local API
-* import/export profiles
-* richer filtering/search
+- CLI
+- read-only local API
+- import/export profiles
+- richer filtering/search
 
 #### Phase 4: agent layer
 
-* MCP server over stdio
-* read-only tools/resources
-* simulations
-* optional write-enabled tools behind permission gates
+- MCP server over stdio
+- read-only tools/resources
+- simulations
+- optional write-enabled tools behind permission gates
 
 #### Phase 5: ecosystem
 
-* plugin hooks
-* theme customization
-* optional household mode
-* importers from other apps’ CSVs
+- plugin hooks
+- theme customization
+- optional household mode
+- importers from other apps’ CSVs
 
 ---
 
@@ -580,28 +575,27 @@ Keep **Rust thin** at first. Put most product logic in TypeScript domain/applica
 
 That keeps the project:
 
-* fast to build
-* native enough to feel sharp
-* local enough to honor the mission
-* open enough for agents and power users
-* small enough to actually ship
+- fast to build
+- native enough to feel sharp
+- local enough to honor the mission
+- open enough for agents and power users
+- small enough to actually ship
 
 ### 16. Final architecture decision
 
 If I were locking the blueprint today, I’d choose:
 
-* **Tauri 2**
-* **React + TypeScript + Vite**
-* **SQLite**
-* **Domain-driven modular monolith**
-* **Single-window desktop app**
-* **Tray quick-add**
-* **CLI in Phase 3**
-* **MCP over stdio in Phase 4**
-* **No local HTTP API until there is a real need**
+- **Tauri 2**
+- **React + TypeScript + Vite**
+- **SQLite**
+- **Domain-driven modular monolith**
+- **Single-window desktop app**
+- **Tray quick-add**
+- **CLI in Phase 3**
+- **MCP over stdio in Phase 4**
+- **No local HTTP API until there is a real need**
 
 That is the boss move here. Clean. Portable. Shippable. No cloud tax. No feature bloat parade.
-
 
 [1]: https://v2.tauri.app/?utm_source=chatgpt.com "Tauri 2.0 | Tauri"
 [2]: https://sqlite.org/whentouse.html?utm_source=chatgpt.com "Appropriate Uses For SQLite"

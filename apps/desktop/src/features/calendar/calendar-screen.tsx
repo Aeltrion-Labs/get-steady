@@ -53,7 +53,8 @@ export function CalendarScreen({
   onMarkPartial: (date: string) => Promise<void> | void;
 }) {
   const [internalSelectedDate, setInternalSelectedDate] = useState<string | null>(selectedDate);
-  const activeDate = internalSelectedDate ?? calendar.recovery.oldestMissedDate ?? calendar.days[0]?.date ?? null;
+  const activeDate =
+    internalSelectedDate ?? calendar.recovery.oldestMissedDate ?? calendar.days[0]?.date ?? null;
   const activeDay = useMemo(
     () => calendar.days.find((day) => day.date === activeDate) ?? null,
     [activeDate, calendar.days],
@@ -70,10 +71,12 @@ export function CalendarScreen({
       <div className="flex flex-col gap-4 rounded-[32px] border border-border/80 bg-card/95 p-6 shadow-card lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-3">
           <Badge>Calendar</Badge>
-          <h1 className="font-display text-4xl text-foreground">{buildMonthLabel(calendar.month)}</h1>
+          <h1 className="font-display text-4xl text-foreground">
+            {buildMonthLabel(calendar.month)}
+          </h1>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-            See where the month is complete, where recovery is needed, and move directly into catch-up without turning
-            history into a guilt dashboard.
+            See where the month is complete, where recovery is needed, and move directly into
+            catch-up without turning history into a guilt dashboard.
           </p>
         </div>
         <div className="flex gap-3">
@@ -91,25 +94,41 @@ export function CalendarScreen({
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="font-display text-2xl text-foreground">Recovery lane</h2>
-              <p className="text-sm text-muted-foreground">Missing days are warning-toned, not failure-toned.</p>
+              <p className="text-sm text-muted-foreground">
+                Missing days are warning-toned, not failure-toned.
+              </p>
             </div>
-            <Badge className="border-warning/30 bg-warning/15 text-warning-foreground">{calendar.recovery.missedCount} missed</Badge>
+            <Badge className="border-warning/30 bg-warning/15 text-warning-foreground">
+              {calendar.recovery.missedCount} missed
+            </Badge>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-[24px] border border-warning/25 bg-warning/12 px-4 py-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-warning-foreground/75">Oldest missed day</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-warning-foreground/75">
+                Oldest missed day
+              </p>
               <p className="mt-2 text-lg font-semibold text-foreground">
-                {calendar.recovery.oldestMissedDate ? formatShortDate(calendar.recovery.oldestMissedDate) : "Nothing pending"}
+                {calendar.recovery.oldestMissedDate
+                  ? formatShortDate(calendar.recovery.oldestMissedDate)
+                  : "Nothing pending"}
               </p>
             </div>
             <div className="rounded-[24px] border border-border bg-muted/40 px-4 py-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">This month</p>
-              <p className="mt-2 text-lg font-semibold text-foreground">{calendar.recovery.missedCount} day(s) to recover</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                This month
+              </p>
+              <p className="mt-2 text-lg font-semibold text-foreground">
+                {calendar.recovery.missedCount} day(s) to recover
+              </p>
             </div>
             <div className="rounded-[24px] border border-border bg-muted/40 px-4 py-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Best next move</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Best next move
+              </p>
               <p className="mt-2 text-sm leading-6 text-foreground">
-                {calendar.recovery.oldestMissedDate ? "Open the oldest missed day and fill it gently." : "Stay with today and keep the loop short."}
+                {calendar.recovery.oldestMissedDate
+                  ? "Open the oldest missed day and fill it gently."
+                  : "Stay with today and keep the loop short."}
               </p>
             </div>
           </div>
@@ -118,9 +137,13 @@ export function CalendarScreen({
         <Card className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-display text-2xl text-foreground">{activeDay ? formatShortDate(activeDay.date) : "Select a day"}</h2>
+              <h2 className="font-display text-2xl text-foreground">
+                {activeDay ? formatShortDate(activeDay.date) : "Select a day"}
+              </h2>
               <p className="text-sm text-muted-foreground">
-                {activeDay ? "Review the day first, then choose the smallest next action." : "Pick a day to inspect and recover."}
+                {activeDay
+                  ? "Review the day first, then choose the smallest next action."
+                  : "Pick a day to inspect and recover."}
               </p>
             </div>
             {activeDay ? (
@@ -141,21 +164,33 @@ export function CalendarScreen({
             <>
               <div className="grid gap-3 md:grid-cols-3">
                 <div className="rounded-[22px] border border-border bg-muted/35 px-4 py-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Money in</p>
-                  <p className="mt-2 text-xl font-semibold tabular-nums text-foreground">{formatCurrency(activeDay.moneyIn)}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Money in
+                  </p>
+                  <p className="mt-2 text-xl font-semibold tabular-nums text-foreground">
+                    {formatCurrency(activeDay.moneyIn)}
+                  </p>
                 </div>
                 <div className="rounded-[22px] border border-border bg-muted/35 px-4 py-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Money out</p>
-                  <p className="mt-2 text-xl font-semibold tabular-nums text-foreground">{formatCurrency(activeDay.moneyOut)}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Money out
+                  </p>
+                  <p className="mt-2 text-xl font-semibold tabular-nums text-foreground">
+                    {formatCurrency(activeDay.moneyOut)}
+                  </p>
                 </div>
                 <div className="rounded-[22px] border border-border bg-muted/35 px-4 py-4">
                   <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Net</p>
-                  <p className="mt-2 text-xl font-semibold tabular-nums text-foreground">{formatCurrency(activeDay.net)}</p>
+                  <p className="mt-2 text-xl font-semibold tabular-nums text-foreground">
+                    {formatCurrency(activeDay.net)}
+                  </p>
                 </div>
               </div>
 
               <div className="rounded-[24px] border border-border bg-muted/30 p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">What this means</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  What this means
+                </p>
                 <p className="mt-2 text-sm leading-6 text-foreground">
                   {activeDay.state === "missed"
                     ? "Nothing is broken. This day simply needs attention."
@@ -182,12 +217,18 @@ export function CalendarScreen({
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="font-display text-2xl text-foreground">Month grid</h2>
-            <p className="text-sm text-muted-foreground">Use the grid to scan the month quickly, then inspect one day at a time.</p>
+            <p className="text-sm text-muted-foreground">
+              Use the grid to scan the month quickly, then inspect one day at a time.
+            </p>
           </div>
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
             <span className="rounded-full border border-border bg-card px-3 py-1">Complete</span>
-            <span className="rounded-full border border-primary/20 bg-accent/70 px-3 py-1">Partial</span>
-            <span className="rounded-full border border-warning/30 bg-warning/15 px-3 py-1 text-warning-foreground">Missed</span>
+            <span className="rounded-full border border-primary/20 bg-accent/70 px-3 py-1">
+              Partial
+            </span>
+            <span className="rounded-full border border-warning/30 bg-warning/15 px-3 py-1 text-warning-foreground">
+              Missed
+            </span>
           </div>
         </div>
         <div className="grid grid-cols-7 gap-2 text-center text-xs uppercase tracking-[0.16em] text-muted-foreground">
@@ -207,14 +248,30 @@ export function CalendarScreen({
                 onClick={() => setInternalSelectedDate(day.date)}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <span className="text-base font-semibold tabular-nums text-foreground">{Number(day.date.slice(-2))}</span>
-                  {day.hasDueMarker ? <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Due</span> : null}
+                  <span className="text-base font-semibold tabular-nums text-foreground">
+                    {Number(day.date.slice(-2))}
+                  </span>
+                  {day.hasDueMarker ? (
+                    <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                      Due
+                    </span>
+                  ) : null}
                 </div>
                 <div className="mt-4 space-y-2">
-                  <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{day.state}</div>
+                  <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                    {day.state}
+                  </div>
                   <div className="flex flex-wrap gap-1">
-                    {day.hasEntries ? <span className="rounded-full bg-card/75 px-2 py-1 text-[10px] text-muted-foreground">Logged</span> : null}
-                    {day.hasDebtPayment ? <span className="rounded-full bg-card/75 px-2 py-1 text-[10px] text-muted-foreground">Debt</span> : null}
+                    {day.hasEntries ? (
+                      <span className="rounded-full bg-card/75 px-2 py-1 text-[10px] text-muted-foreground">
+                        Logged
+                      </span>
+                    ) : null}
+                    {day.hasDebtPayment ? (
+                      <span className="rounded-full bg-card/75 px-2 py-1 text-[10px] text-muted-foreground">
+                        Debt
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </button>

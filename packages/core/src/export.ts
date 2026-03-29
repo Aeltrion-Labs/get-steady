@@ -6,8 +6,8 @@ function escapeCsvValue(value: string | number | null): string {
   }
 
   const text = String(value);
-  if (text.includes(",") || text.includes("\"") || text.includes("\n")) {
-    return `"${text.replaceAll("\"", "\"\"")}"`;
+  if (text.includes(",") || text.includes('"') || text.includes("\n")) {
+    return `"${text.replaceAll('"', '""')}"`;
   }
 
   return text;

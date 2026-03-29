@@ -97,7 +97,8 @@ export function EntryForm({
         id: initialEntry?.id,
         type: parsed.data.type,
         amount: parsed.data.amount,
-        categoryId: parsed.data.type === "debt_payment" ? "cat-debt-payment" : parsed.data.categoryId,
+        categoryId:
+          parsed.data.type === "debt_payment" ? "cat-debt-payment" : parsed.data.categoryId,
         debtId: parsed.data.type === "debt_payment" ? parsed.data.debtId : null,
         note: parsed.data.note?.trim() ? parsed.data.note.trim() : null,
         entryDate: parsed.data.entryDate,
@@ -151,7 +152,9 @@ export function EntryForm({
             step="0.01"
             placeholder="0.00"
             value={values.amount}
-            onChange={(event) => setValues((current) => ({ ...current, amount: event.target.value }))}
+            onChange={(event) =>
+              setValues((current) => ({ ...current, amount: event.target.value }))
+            }
           />
         </div>
       </div>
@@ -163,7 +166,9 @@ export function EntryForm({
             id="entry-date"
             type="date"
             value={values.entryDate}
-            onChange={(event) => setValues((current) => ({ ...current, entryDate: event.target.value }))}
+            onChange={(event) =>
+              setValues((current) => ({ ...current, entryDate: event.target.value }))
+            }
           />
         </div>
         {values.type === "debt_payment" ? (
@@ -172,7 +177,9 @@ export function EntryForm({
             <Select
               id="entry-debt"
               value={values.debtId}
-              onChange={(event) => setValues((current) => ({ ...current, debtId: event.target.value }))}
+              onChange={(event) =>
+                setValues((current) => ({ ...current, debtId: event.target.value }))
+              }
             >
               <option value="">Select debt</option>
               {debts
@@ -190,7 +197,9 @@ export function EntryForm({
             <Select
               id="entry-category"
               value={values.categoryId}
-              onChange={(event) => setValues((current) => ({ ...current, categoryId: event.target.value }))}
+              onChange={(event) =>
+                setValues((current) => ({ ...current, categoryId: event.target.value }))
+              }
             >
               <option value="">Select category</option>
               {categoryOptions.map((category) => (
@@ -217,7 +226,9 @@ export function EntryForm({
         <input
           checked={values.isEstimated}
           type="checkbox"
-          onChange={(event) => setValues((current) => ({ ...current, isEstimated: event.target.checked }))}
+          onChange={(event) =>
+            setValues((current) => ({ ...current, isEstimated: event.target.checked }))
+          }
         />
         Mark as estimated
       </label>
