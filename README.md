@@ -16,7 +16,7 @@ This repository contains the MVP desktop application and shared business logic f
 first public open-source release. The desktop app is usable locally today, but the project
 is still early and some release-engineering work is intentionally deferred.
 
-Implemented today:
+Implemented:
 
 - Tauri desktop shell with React and TypeScript UI
 - local SQLite storage with migration bootstrap
@@ -24,14 +24,6 @@ Implemented today:
 - CSV export and local database backup flows
 - shared validation and summary logic in `@get-steady/core`
 - public marketing site in `apps/web`
-
-Not in this launch:
-
-- bank sync
-- cloud accounts or sync
-- mobile apps
-- auto-update infrastructure
-- signed or notarized desktop release automation
 
 ## Why This Exists
 
