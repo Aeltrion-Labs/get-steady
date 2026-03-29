@@ -105,3 +105,7 @@ Typical platform-specific app data roots:
 - Debt payments are stored as normal entries linked to a debt and update the debt balance transactionally.
 - The UI computes daily/monthly summaries and catch-up state from the shared `@get-steady/core` package.
 - Export uses friendly CSV headers. XLSX is not included in this pass.
+
+## License
+
+This project is licensed under the MIT License. See `LICENSE` for the full text.

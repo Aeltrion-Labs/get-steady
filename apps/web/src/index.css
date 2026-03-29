@@ -1,0 +1,40 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+
+  --background: 222 26% 7%;
+  --foreground: 210 14% 88%;
+  --card: 222 22% 10%;
+  --card-foreground: 210 14% 88%;
+  --border: 217 18% 16%;
+  --muted: 222 20% 13%;
+  --muted-foreground: 216 10% 58%;
+  --accent: 187 22% 14%;
+  --accent-foreground: 187 60% 76%;
+  --primary: 187 44% 46%;
+  --primary-foreground: 222 26% 7%;
+
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background));
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background-color: hsl(var(--background));
+}
+
+html {
+  scroll-behavior: smooth;
+}
