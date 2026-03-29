@@ -61,7 +61,7 @@ jobs:
       - name: Build marketing site
         run: pnpm --filter @get-steady/web build
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: apps/web/dist
 
