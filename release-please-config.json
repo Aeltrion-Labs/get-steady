@@ -5,7 +5,7 @@
       "release-type": "node",
       "component": "desktop",
       "package-name": "@get-steady/desktop",
-      "changelog-path": "apps/desktop/CHANGELOG.md",
+      "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": false,
       "include-v-in-tag": true,
       "extra-files": [
