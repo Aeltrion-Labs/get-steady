@@ -447,4 +447,60 @@ describe("App", () => {
       expect(restoreBackupMock).toHaveBeenCalledWith("backup-ok", expect.any(Object));
     });
   });
+
+  it("disables restore while a restore is already in progress", async () => {
+    installMatchMedia(false);
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    let resolveRestore: (() => void) | undefined;
+    restoreBackupMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveRestore = resolve;
+        }),
+    );
+    bootstrapAppMock.mockResolvedValue(
+      bootstrapPayload({
+        onboarding: {
+          ...bootstrapPayload().onboarding,
+          hasCompletedOnboarding: true,
+        },
+        backups: [
+          {
+            id: "backup-ok",
+            kind: "manual",
+            status: "success",
+            filePath: "C:\\backups\\manual.sqlite",
+            fileName: "manual.sqlite",
+            createdAt: "2026-03-27T12:00:00Z",
+            completedAt: "2026-03-27T12:00:10Z",
+            sizeBytes: 1024,
+            errorMessage: null,
+            triggeredBy: "user",
+          },
+        ],
+      }),
+    );
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    const restoreButton = screen.getByRole("button", { name: "Restore backup" });
+    fireEvent.click(restoreButton);
+
+    await waitFor(() => {
+      expect(restoreBackupMock).toHaveBeenCalledTimes(1);
+      expect(restoreButton).toBeDisabled();
+    });
+
+    fireEvent.click(restoreButton);
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(restoreBackupMock).toHaveBeenCalledTimes(1);
+
+    resolveRestore?.();
+  });
 });

@@ -38,6 +38,7 @@ export function SettingsScreen({
   settings,
   backupSummary,
   backups,
+  isRestoringBackup,
   onSaveSettings,
   onExportEntries,
   onExportDebts,
@@ -51,6 +52,7 @@ export function SettingsScreen({
   settings: UserSettings;
   backupSummary: BackupSummary;
   backups: BackupRecord[];
+  isRestoringBackup: boolean;
   onSaveSettings: (input: UserSettings) => Promise<void> | void;
   onExportEntries: () => Promise<void> | void;
   onExportDebts: () => Promise<void> | void;
@@ -289,7 +291,7 @@ export function SettingsScreen({
             ) : (
               <div className="space-y-3">
                 {backups.map((backup) => {
-                  const isRestorable = backup.status === "success";
+                  const isRestorable = backup.status === "success" && !isRestoringBackup;
                   return (
                     <div
                       key={backup.id}

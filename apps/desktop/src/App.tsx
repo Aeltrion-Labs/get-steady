@@ -704,6 +704,7 @@ function AppInner() {
               settings={data.settings}
               backupSummary={data.backupSummary}
               backups={data.backups}
+              isRestoringBackup={restoreBackupMutation.isPending}
               onSaveSettings={async (input) => {
                 await saveSettingsMutation.mutateAsync(input);
               }}
