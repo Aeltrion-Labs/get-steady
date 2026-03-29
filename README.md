@@ -128,6 +128,18 @@ Format the repository:
 pnpm format
 ```
 
+## Windows Releases
+
+Windows installers are published from Git tags like `v0.1.0` through GitHub Actions.
+
+Current release properties:
+
+- Windows only
+- unsigned installers for now
+- release assets attached to GitHub Releases
+- `SHA256SUMS.txt` included with each release
+- GitHub provenance attestations generated for shipped assets
+
 ## Quality Gates
 
 The public launch baseline includes:

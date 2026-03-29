@@ -1,0 +1,113 @@
+name: Release desktop (Windows)
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  attestations: write
+  id-token: write
+
+concurrency:
+  group: release-windows-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install Rust toolchain
+        shell: pwsh
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run quality checks
+        run: pnpm check
+
+      - name: Build Windows desktop bundles
+        run: pnpm --filter @get-steady/desktop tauri build
+
+      - name: Collect release assets
+        id: collect
+        shell: pwsh
+        run: |
+          $bundleRoot = Join-Path $PWD "apps/desktop/src-tauri/target/release/bundle"
+          if (-not (Test-Path $bundleRoot)) {
+            throw "Tauri bundle output not found at $bundleRoot"
+          }
+
+          $releaseDir = Join-Path $env:RUNNER_TEMP "windows-release"
+          New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
+
+          $assets = Get-ChildItem -Path $bundleRoot -Recurse -File |
+            Where-Object { $_.Extension -in @(".exe", ".msi") }
+
+          if (-not $assets) {
+            throw "No Windows installer artifacts were found under $bundleRoot"
+          }
+
+          foreach ($asset in $assets) {
+            Copy-Item -LiteralPath $asset.FullName -Destination (Join-Path $releaseDir $asset.Name) -Force
+          }
+
+          $checksumPath = Join-Path $releaseDir "SHA256SUMS.txt"
+          Get-ChildItem -Path $releaseDir -File |
+            Where-Object { $_.Name -ne "SHA256SUMS.txt" } |
+            Sort-Object Name |
+            ForEach-Object {
+              $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLower()
+              "{0} *{1}" -f $hash, $_.Name
+            } | Set-Content -LiteralPath $checksumPath -NoNewline:$false
+
+          "release_dir=$releaseDir" >> $env:GITHUB_OUTPUT
+          "checksums_path=$checksumPath" >> $env:GITHUB_OUTPUT
+
+      - name: Create GitHub Release if needed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          gh release view $env:GITHUB_REF_NAME --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $env:GITHUB_REF_NAME `
+              --repo $env:GITHUB_REPOSITORY `
+              --title $env:GITHUB_REF_NAME `
+              --generate-notes
+          }
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Path "${{ steps.collect.outputs.release_dir }}" -File | ForEach-Object { $_.FullName }
+          if (-not $files) {
+            throw "No files found to upload"
+          }
+
+          gh release upload $env:GITHUB_REF_NAME `
+            --repo $env:GITHUB_REPOSITORY `
+            --clobber `
+            $files
+
+      - name: Attest release artifacts
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-checksums: ${{ steps.collect.outputs.checksums_path }}
