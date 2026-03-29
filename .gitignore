@@ -4,6 +4,5 @@ coverage/
 apps/desktop/dist/
 apps/desktop/src-tauri/target/
 apps/web/dist/
-docs
 dist/
 .DS_Store
