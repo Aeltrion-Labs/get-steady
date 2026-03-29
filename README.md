@@ -170,3 +170,13 @@ Please read [SECURITY.md](SECURITY.md) before reporting vulnerabilities.
 ## License
 
 This project is released under the [MIT License](LICENSE).
+
+## Desktop Versioning
+
+Desktop releases use conventional commits plus `release-please`.
+
+- Merge `feat:`, `fix:`, and breaking-change commits into `main`.
+- `release-please` opens or updates a desktop release PR with the next semantic version.
+- Merging that release PR creates the `vX.Y.Z` tag and GitHub Release.
+- The Windows installer workflow publishes desktop artifacts from that tag.
+- Repository maintainers must configure a `RELEASE_PLEASE_TOKEN` secret so release tags can trigger downstream release workflows.
